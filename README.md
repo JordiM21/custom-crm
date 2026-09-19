@@ -13,6 +13,7 @@ account yet.** Everything below is what you do to connect it.
 
 | Part | State |
 |---|---|
+| Practice mode: talk to the bot without WhatsApp | Done — see the next section |
 | Webhook, signature check, deduplication | Done, tested |
 | Lead capture and ad attribution (`ctwa_clid`) | Done, tested |
 | Handoff when you reply from your phone | Done, tested |
@@ -22,7 +23,7 @@ account yet.** Everything below is what you do to connect it.
 | Sending conversions to Meta (M6) | **Not built.** Events are recorded and wait in the database. |
 | Template messages for cold leads, voice notes, images | **Not built.** Out of scope for v1. |
 
-103 automated tests pass. What is *not* tested is anything touching a real
+118 automated tests pass. What is *not* tested is anything touching a real
 account, because there are no real accounts yet.
 
 **Right now the system runs in demo mode:** fake database, fake AI replies,
@@ -43,7 +44,104 @@ their conversations. Nothing you do there touches a real phone.
 
 ---
 
-# What to do next, in order
+# Testing today, without WhatsApp
+
+Connecting WhatsApp takes days of Meta paperwork. You do not have to wait for
+it to find out whether the bot sounds right. This path takes about half an hour
+and needs one account: Anthropic.
+
+## 1. Get an Anthropic API key (5 min)
+
+1. [console.anthropic.com](https://console.anthropic.com) → sign in.
+2. **Settings → Billing** → add a payment method and a small amount of credit.
+   USD 5 lasts a very long time at this volume — see the cost note below.
+3. **API keys → Create key**. Copy it. It starts with `sk-ant-`. You only see
+   it once.
+
+## 2. Run it on your own machine (10 min)
+
+```bash
+git clone https://github.com/JordiM21/custom-crm.git
+cd custom-crm
+npm install
+cp .env.example .env.local
+```
+
+Open `.env.local` and set three lines:
+
+```
+AI_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-ant-...tu-clave...
+ANTHROPIC_MODEL=claude-haiku-4-5
+```
+
+Leave everything else empty. Then:
+
+```bash
+npm run dev:local
+```
+
+Open <http://localhost:3000>. No password needed while `ADMIN_PASSWORD` is
+empty, and no database is needed — it runs on demo data.
+
+## 3. Talk to it (20 min, and the part that matters)
+
+Go to the **Probar** tab. Write as if you were a parent. The bot answers with
+the real model, using the real prompt and the real knowledge file. Nothing is
+ever sent to WhatsApp from this screen, even in production.
+
+Things worth trying, because each one exercises a different rule:
+
+| Type this | What should happen |
+|---|---|
+| `hola` | A short greeting and **one** question. Never a price. |
+| `cuanto cuesta?` | It should ask the child's age first, not quote a price. |
+| `tiene 9 años, se llama Sofía` | It should save the name and age — check the line under the chat. |
+| `hay descuento por dos hermanos?` | Straight to you. Stage becomes "Atendido por Jordi". |
+| `quiero que me devuelvan el dinero` | Same — refunds never reach the model. |
+| `mi hijo tiene dislexia, sirve?` | Same — anything about a child's wellbeing is yours. |
+| `esto es un bot?` | It should say it is an assistant and that you read everything. |
+
+**"Empezar de nuevo"** wipes the conversation so you can test another opening.
+
+While `knowledge/business.md` still has blanks, the bot will refuse to give
+prices and schedules. That is correct behaviour, not a bug — the panel says so
+above the chat.
+
+## 4. Make it sound like you
+
+This is the loop that actually improves the bot, and it is the whole of what
+people mean by "training" here:
+
+1. Read a reply in **Probar** that feels wrong.
+2. Decide which it is:
+   - **Wrong fact** (price, schedule, policy) → fix `knowledge/business.md`.
+   - **Wrong tone or behaviour** (too formal, two questions at once, pitches
+     too early) → tell me and I will change the prompt rules.
+3. Restart (`Ctrl+C`, then `npm run dev:local`) and try the same message again.
+
+Most of what you will want to change is the knowledge file, not the prompt.
+
+## What this does NOT test
+
+- Anything Meta-related: receiving real messages, the handoff when you reply
+  from your phone, the 24-hour window. Those need Step 4 of the setup.
+- Google Calendar and Stripe, unless you connect them.
+- Message pacing. Practice mode answers instantly on purpose; on a real number
+  replies wait 8-45 seconds.
+
+## What this costs
+
+Claude Haiku 4.5 is USD 1 per million input tokens and USD 5 per million
+output tokens. A full conversation with a parent is on the order of a US cent.
+An afternoon of testing is well under a dollar. Each conversation's exact cost
+shows under the chat and on the contact's detail panel, and
+`AI_COST_CEILING_USD` hands any single conversation to you once it passes that
+amount, so a loop cannot run up a bill.
+
+---
+
+# Putting it live, in order
 
 Do these in order. Each one says what breaks if you skip it. The panel's
 **Conexiones** page shows the same list, live, so you can always see where you
@@ -140,7 +238,7 @@ Everything the model does goes through one small interface (`lib/ai/`) with
 three adapters. You switch providers with one environment variable and no code
 change.
 
-### Option A — Anthropic (Claude)
+### Option A — Anthropic (Claude) — what we are using
 
 ```
 AI_PROVIDER=anthropic
@@ -149,6 +247,12 @@ ANTHROPIC_MODEL=claude-haiku-4-5
 ```
 
 Key from [console.anthropic.com](https://console.anthropic.com) → API Keys.
+Haiku 4.5 costs USD 1 per million input tokens and USD 5 per million output —
+roughly a US cent per parent conversation.
+
+There is no training step and no fine-tuning. What the bot knows comes from
+`knowledge/business.md`; how it behaves comes from the prompt rules in
+`lib/agent/prompt.ts`. You change a fact by editing a markdown file.
 
 ### Option B — anything that speaks the OpenAI format
 
@@ -361,6 +465,9 @@ override it.
 
 Ordered by what unblocks the most work:
 
+0. **Try it first.** Run the testing section above and tell me what sounds
+   wrong. That costs you a coffee's worth of API credit and tells us more than
+   any amount of planning.
 1. **The answer to Step 0.** Can your number be onboarded to coexistence, or is
    it locked to another provider? Nothing else matters until this is known.
 2. **`knowledge/business.md`, filled in.** Prices, plans, schedule, policies,
@@ -435,7 +542,7 @@ the conversations where being wrong costs a customer or hurts a child.
 
 ```bash
 npm install
-npm test          # 103 tests, no network, no accounts needed
+npm test          # 118 tests, no network, no accounts needed
 npm run typecheck
 npm run dev:local # panel + API at localhost:3000, no Vercel needed
 ```
