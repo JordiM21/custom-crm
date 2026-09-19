@@ -97,6 +97,63 @@ export async function resolveLead(waId: string, profileName?: string | null): Pr
   return store.upsertLead(waId, patch);
 }
 
+/**
+ * SPEC §4.2 — the Click-to-WhatsApp click id.
+ *
+ * `ctwa_clid` rides on the FIRST message only and never appears again. Without
+ * it Meta cannot attribute a sale back to the ad that produced it, so this
+ * write happens before anything else and a failure is logged loudly rather
+ * than swallowed.
+ *
+ * Never overwrite an existing clid: a parent who clicks a second ad months
+ * later must stay attributed to the click that actually started the
+ * conversation.
+ */
+async function captureReferral(lead: Lead, msg: WebhookMessage): Promise<Lead> {
+  const referral = msg.referral;
+  if (!referral?.ctwa_clid) return lead;
+
+  if (lead.ctwa_clid) {
+    log.info('ctwa.already_captured', {
+      lead_id: lead.id,
+      existing: lead.ctwa_clid,
+      incoming: referral.ctwa_clid,
+    });
+    return lead;
+  }
+
+  try {
+    const store = await getStore();
+    const updated = await store.updateLead(lead.id, {
+      ctwa_clid: referral.ctwa_clid,
+      ctwa_source_id: referral.source_id ?? null,
+      ctwa_headline: referral.headline ?? null,
+      ctwa_captured_at: new Date().toISOString(),
+      tags: lead.tags.includes('ctwa') ? lead.tags : [...lead.tags, 'ctwa'],
+    });
+    log.info('ctwa.captured', {
+      lead_id: lead.id,
+      source_id: referral.source_id,
+      headline: referral.headline,
+      human: 'A lead arrived from a Facebook or Instagram ad and was tagged for tracking.',
+    });
+    return updated;
+  } catch (err) {
+    // Critical-path data. If this write fails the attribution is gone for good,
+    // so the failure has to be visible rather than buried.
+    log.error('ctwa.capture_failed', {
+      lead_id: lead.id,
+      wa_id: lead.wa_id,
+      ctwa_clid: referral.ctwa_clid,
+      source_id: referral.source_id,
+      error: String(err),
+      human:
+        'Could not save the ad-click id for a new lead. Meta will not be able to attribute this sale.',
+    });
+    return lead;
+  }
+}
+
 async function handleInbound(
   msg: WebhookMessage,
   value: WebhookValue,
@@ -110,7 +167,11 @@ async function handleInbound(
   }
 
   const contact = value.contacts?.find((c) => c.wa_id === waId) ?? value.contacts?.[0];
-  const lead = await resolveLead(waId, contact?.profile?.name ?? null);
+  let lead = await resolveLead(waId, contact?.profile?.name ?? null);
+
+  // Before the message insert: a duplicate delivery must not be the reason a
+  // referral is lost, and this runs whether or not the insert dedupes.
+  lead = await captureReferral(lead, msg);
 
   const receivedAt = timestampToIso(msg.timestamp);
   const body = messageText(msg);
