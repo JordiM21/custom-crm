@@ -1,0 +1,30 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "WABA_ID_PLACEHOLDER",
+      "changes": [
+        {
+          "field": "message_echoes",
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "15550001111",
+              "phone_number_id": "PHONE_NUMBER_ID_PLACEHOLDER"
+            },
+            "smb_message_echoes": [
+              {
+                "from": "15550001111",
+                "recipient_id": "51987654321",
+                "id": "wamid.TEST.echo.0002",
+                "timestamp": "1758240500",
+                "type": "text",
+                "text": { "body": "Hola Carlos, te respondo yo." }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

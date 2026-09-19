@@ -5,6 +5,7 @@ import {
   messageText,
   readEchoes,
   timestampToIso,
+  type WebhookEcho,
   type WebhookMessage,
   type WebhookPayload,
   type WebhookValue,
@@ -57,12 +58,8 @@ async function processChange(
     }
   }
 
-  if (echoes.length) {
-    log.info('webhook.echo_received', {
-      count: echoes.length,
-      field,
-      human: 'Jordi replied from his phone.',
-    });
+  for (const echo of echoes) {
+    await handleEcho(echo, field, result);
   }
 
   if (value.statuses?.length) {
@@ -204,6 +201,68 @@ async function handleInbound(
     wa_id: waId,
     type: msg.type,
     chars: body?.length ?? 0,
+  });
+}
+
+/**
+ * SPEC §4.3 — coexistence. Jordi typed to this parent from the WhatsApp
+ * Business app on his phone and Meta echoed it back to us.
+ *
+ * This is the whole handoff mechanism. Jordi typing is the signal; there is no
+ * command for him to remember. The bot goes quiet for that parent until it is
+ * resumed from the admin panel.
+ */
+async function handleEcho(echo: WebhookEcho, field: string, result: ProcessResult): Promise<void> {
+  const store = await getStore();
+
+  // The echo is a message Jordi SENT, so the lead is the recipient. Field name
+  // varies by payload shape, so try each before giving up.
+  const waId = echo.to ?? echo.recipient_id ?? null;
+  if (!waId) {
+    log.error('webhook.echo_without_recipient', {
+      field,
+      keys: Object.keys(echo),
+      human: 'Jordi replied from his phone but we could not tell which parent it went to.',
+    });
+    result.errors += 1;
+    return;
+  }
+
+  const lead = await resolveLead(waId);
+  const sentAt = timestampToIso(echo.timestamp);
+
+  const { inserted } = await store.insertMessage({
+    lead_id: lead.id,
+    wa_message_id: echo.id ?? null,
+    direction: 'outbound_human',
+    body: echo.text?.body ?? null,
+    raw: echo,
+    created_at: sentAt,
+  });
+
+  if (!inserted) {
+    result.duplicates += 1;
+    return;
+  }
+
+  // Pause first, cancel second. If the process dies between the two, a paused
+  // lead with a stale queue is recoverable — the drain re-checks bot_paused
+  // before every send. The reverse order would leave the bot free to talk.
+  await store.updateLead(lead.id, {
+    bot_paused: true,
+    bot_paused_reason: 'human_replied',
+    bot_paused_at: new Date().toISOString(),
+    last_message_at: sentAt,
+  });
+
+  const cancelled = await store.cancelQueueForLead(lead.id, 'human_replied');
+
+  result.handled += 1;
+  log.info('webhook.human_reply', {
+    lead_id: lead.id,
+    wa_id: waId,
+    cancelled_messages: cancelled,
+    human: `Jordi replied to ${lead.display_name ?? lead.profile_name ?? waId} from his phone. The bot is now paused for this parent.`,
   });
 }
 
