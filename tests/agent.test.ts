@@ -207,3 +207,76 @@ test('an incomplete knowledge file adds the do-not-quote-facts warning', async (
 
   assert.match(provider.lastRequest!.system, /INCOMPLETA/);
 });
+
+test('the agent resolves a tool call and then answers the parent', async () => {
+  const lead = await makeLead();
+
+  let round = 0;
+  __setProvider({
+    name: 'tool-using',
+    isConfigured: () => true,
+    complete: async () => {
+      round += 1;
+      if (round === 1) {
+        return {
+          text: '',
+          toolCalls: [
+            {
+              id: 'call_1',
+              name: 'update_lead',
+              input: { student_name: 'Sofía', student_age: 9, stage: 'qualified' },
+            },
+          ],
+          usage: { inputTokens: 40, outputTokens: 10, costUsd: 0.0004 },
+          stopReason: 'tool_use',
+        };
+      }
+      return {
+        text: 'perfecto, a los 9 avanzan rapidísimo. te agendo una clase de prueba?',
+        toolCalls: [],
+        usage: { inputTokens: 60, outputTokens: 20, costUsd: 0.0006 },
+        stopReason: 'end_turn',
+      };
+    },
+  });
+
+  const result = await runAgent(lead.id, { text: 'tiene 9 años', waMessageId: 'wamid.20' });
+
+  assert.equal(result.status, 'queued');
+  assert.equal(round, 2, 'the model was called again with the tool result');
+
+  const updated = (await store.getLeadById(lead.id))!;
+  assert.equal(updated.student_name, 'Sofía');
+  assert.equal(updated.stage, 'qualified');
+  assert.match(store.queue[0]!.body, /clase de prueba/);
+});
+
+test('a tool that escalates stops the turn, whatever the model wanted to say next', async () => {
+  const lead = await makeLead();
+
+  __setProvider({
+    name: 'escalating',
+    isConfigured: () => true,
+    complete: async () => ({
+      text: 'el plan cuesta cien dólares',
+      toolCalls: [
+        {
+          id: 'call_1',
+          name: 'escalate_to_human',
+          input: { reason: 'missing_info', summary: 'Pregunta algo que no está en la información.' },
+        },
+      ],
+      usage: { inputTokens: 40, outputTokens: 10, costUsd: 0.0004 },
+      stopReason: 'tool_use',
+    }),
+  });
+
+  const result = await runAgent(lead.id, { text: 'dan certificado?', waMessageId: 'wamid.21' });
+
+  assert.equal(result.status, 'queued');
+  assert.equal(store.queue.length, 1);
+  assert.doesNotMatch(store.queue[0]!.body, /cien dólares/, 'the invented price never got queued');
+
+  const updated = (await store.getLeadById(lead.id))!;
+  assert.equal(updated.bot_paused, true);
+});

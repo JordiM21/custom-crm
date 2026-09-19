@@ -1,0 +1,29 @@
+{
+  "_comment": [
+    "JORDI: los planes que el asistente puede ofrecer.",
+    "El asistente NUNCA construye un precio: solo puede mandar el link de un plan que esté aquí.",
+    "",
+    "Cómo llenar stripePriceId:",
+    "  1. Entra a Stripe → Products → crea un producto por plan.",
+    "  2. Dentro del producto, copia el ID del precio (empieza con price_...).",
+    "  3. Pégalo aquí y vuelve a desplegar.",
+    "",
+    "Mientras stripePriceId esté vacío, el asistente no puede mandar el link y te pasa el lead a ti."
+  ],
+  "plans": [
+    {
+      "id": "completo",
+      "label": "Plan Completo",
+      "description": "Plan mensual completo de clases de inglés",
+      "stripePriceId": "",
+      "monthlyUsd": 50
+    },
+    {
+      "id": "prueba",
+      "label": "Clase de prueba",
+      "description": "Clase de prueba individual",
+      "stripePriceId": "",
+      "monthlyUsd": 0
+    }
+  ]
+}
