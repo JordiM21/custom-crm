@@ -17,14 +17,18 @@
 
 | Plan | Precio | Duración | Grupo | Días |
 |---|---|---|---|---|
-| Plan Inicial | USD 15, pago único | 2 semanas | máximo 8 estudiantes | martes y jueves |
-| Plan Completo | USD 50 al mes | 20 meses (10 niveles de 2 meses) | máximo 4 estudiantes | lunes, miércoles y viernes |
+| Plan Inicial | USD 15, pago único | 2 semanas | máximo 3 o 4 estudiantes | martes y jueves |
+| Plan Completo | USD 50 al mes | 20 meses (10 niveles de 2 meses) | máximo 3 o 4 estudiantes | lunes, miércoles y viernes |
+
+> **Corregido por Jordi (19/09):** los documentos de Drive decían grupos de
+> hasta 8 en el Plan Inicial. No es así: **todas las clases son en grupos de 3 o
+> 4 estudiantes como máximo.** Si ves un 8 en cualquier documento viejo, está
+> desactualizado.
 
 - **Plan Inicial**: 4 clases de 1 hora, 100% en vivo, más una presentación final
   el último sábado donde el niño dice sus primeras palabras en inglés. Programa
   introductorio para perder el miedo.
-- **Plan Completo**: grupos súper reducidos, enfocado en fluidez, elocuencia y
-  confianza.
+- **Plan Completo**: enfocado en fluidez, elocuencia y confianza.
 - Se puede pagar el equivalente exacto en moneda local. Sin costos ocultos, sin
   matrícula, sin cargos extra.
 - Recomendación de los documentos: empezar siempre por el Plan Inicial.
@@ -82,18 +86,11 @@ Sede administrativa en la Università della Calabria, Cosenza, Italia. Academia
 
 ## Contradicciones que tienes que resolver tú
 
-**1. ¿Clases individuales o en grupo?**
+**1. ¿Clases individuales o en grupo? — RESUELTO (19/09)**
 
-`business.md` dice, en los ejemplos de la sección 7:
-> "clases de inglés para niños, todo en línea y **uno a uno** con el profe"
-> "En **clase individual** no tiene dónde esconderse"
-
-Los documentos de Drive dicen grupos de máximo 8 (Inicial) y máximo 4
-(Completo).
-
-No pueden ser las dos. Esto importa mucho: los ejemplos de la sección 7 se
-inyectan en el prompt, así que el modelo puede copiar "uno a uno" y decírselo a
-un padre aunque sea falso. **Dime cuál es y lo arreglo en los dos sitios.**
+Grupos de máximo 3 o 4 estudiantes, en los dos planes. Ya está corregido en
+`business.md`: los ejemplos de las secciones 2 y 7 decían "uno a uno" y ahora
+dicen "en grupos de 3 o 4", y el campo Formato de la sección 4 quedó relleno.
 
 **2. ¿Descuento por hermanos, sí o no?**
 
