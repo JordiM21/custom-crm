@@ -135,6 +135,8 @@ export interface Store {
     msg: Omit<Message, 'id' | 'created_at'> & { created_at?: string },
   ): Promise<{ inserted: boolean; message: Message }>;
   listMessages(leadId: string, limit?: number): Promise<Message[]>;
+  /** Wipes a lead's transcript. Only the panel's practice mode uses this. */
+  deleteMessages(leadId: string): Promise<void>;
   countMessagesSince(leadId: string, direction: Direction, sinceIso: string): Promise<number>;
 
   enqueue(item: Omit<QueueItem, 'id' | 'created_at' | 'sent_at' | 'cancelled_at' | 'attempts' | 'last_error'>): Promise<QueueItem>;

@@ -1,6 +1,7 @@
 import { log } from '../logger.js';
 import { getStore } from '../store/index.js';
 import type { Lead } from '../store/types.js';
+import { sendNow } from '../queue.js';
 import { alertOwner } from '../whatsapp.js';
 
 /**
@@ -17,8 +18,8 @@ export const ESCALATION_ACK =
 export interface EscalationResult {
   paused: boolean;
   alerted: boolean;
-  /** The line to send the parent, or null when the caller sends its own. */
-  ack: string | null;
+  /** Whether the parent was told someone will reply. */
+  ackSent: boolean;
 }
 
 export async function escalateToHuman(
@@ -28,6 +29,10 @@ export async function escalateToHuman(
   options: { ack?: boolean } = {},
 ): Promise<EscalationResult> {
   const store = await getStore();
+
+  // Before the pause: once bot_paused is set, the queue drain cancels
+  // everything for this lead, which would include this acknowledgement.
+  const ackSent = options.ack === false ? false : await sendNow(lead, ESCALATION_ACK);
 
   await store.updateLead(lead.id, {
     bot_paused: true,
@@ -60,11 +65,7 @@ export async function escalateToHuman(
     human: `${name} necesita que le respondas tú (${reason}).`,
   });
 
-  return {
-    paused: true,
-    alerted: alert.ok,
-    ack: options.ack === false ? null : ESCALATION_ACK,
-  };
+  return { paused: true, alerted: alert.ok, ackSent };
 }
 
 function appendNote(existing: string | null, addition: string): string {

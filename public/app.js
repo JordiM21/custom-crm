@@ -142,10 +142,11 @@ function goTo(page) {
   document.querySelectorAll('.tab').forEach((t) =>
     t.setAttribute('aria-selected', String(t.dataset.page === page)),
   );
-  ['dashboard', 'leads', 'setup'].forEach((name) =>
+  ['dashboard', 'leads', 'practice', 'setup'].forEach((name) =>
     $(`page-${name}`).classList.toggle('hidden', name !== page),
   );
   if (page === 'leads') loadLeads();
+  if (page === 'practice') loadPractice();
 }
 
 /* --- Dashboard ------------------------------------------------------------ */
@@ -556,7 +557,7 @@ function bubble(message) {
         : 'Bot';
   return `
     <div class="bubble ${message.direction}">
-      ${escapeHtml(message.body || '(sin texto)')}
+      <span class="bubble-text">${escapeHtml(message.body || '(sin texto)')}</span>
       <div class="bubble-meta">${who} · ${clockTime(message.created_at)}</div>
     </div>`;
 }
@@ -638,6 +639,123 @@ function renderKnowledge(knowledge) {
       ${knowledge.missing.map((m) => `<span class="var">${escapeHtml(m)}</span>`).join('')}
     </div>`;
 }
+
+
+/* --- Practice mode -------------------------------------------------------- */
+
+/**
+ * Talk to the bot as if you were a parent. Same prompt, same knowledge file,
+ * same model, same tools — the reply simply never leaves for WhatsApp.
+ */
+
+let practiceBusy = false;
+
+function renderPractice(data) {
+  const thread = $('practice-thread');
+  const messages = data.conversation?.messages ?? [];
+
+  if (messages.length === 0) {
+    thread.innerHTML =
+      '<div class="empty" style="margin:auto"><strong>Escribe el primer mensaje</strong>Prueba con "hola, vi el anuncio".</div>';
+  } else {
+    thread.innerHTML = messages
+      .map(
+        (m) => `
+        <div class="bubble ${m.direction}">
+          <span class="bubble-text">${escapeHtml(m.body || '(sin texto)')}</span>
+          <div class="bubble-meta">${m.direction === 'inbound' ? 'Tú, como el padre' : 'Bot'}</div>
+        </div>`,
+      )
+      .join('');
+    thread.scrollTop = thread.scrollHeight;
+  }
+
+  const notices = [];
+  if (!data.realProvider) {
+    notices.push({
+      level: 'warn',
+      message:
+        'Sin proveedor de IA conectado: estas respuestas son frases fijas de demostración. Conecta tu clave para probar de verdad.',
+    });
+  }
+  if (!data.knowledgeComplete) {
+    notices.push({
+      level: 'warn',
+      message:
+        'La información del negocio está incompleta, así que el bot va a evitar dar precios y horarios. Eso es correcto, no es un error.',
+    });
+  }
+  $('practice-banners').innerHTML = notices
+    .map((n) => banner(n.level, escapeHtml(n.message)))
+    .join('');
+
+  const lead = data.conversation?.lead;
+  $('practice-meta').textContent = lead
+    ? [
+        `Etapa: ${state.stages[lead.stage] || lead.stage}`,
+        lead.student_name ? `Estudiante: ${lead.student_name}` : null,
+        lead.student_age ? `${lead.student_age} años` : null,
+        lead.bot_paused ? 'El bot pasó la conversación a ti' : null,
+        `Costo: USD ${Number(lead.cost_usd || 0).toFixed(4)}`,
+      ]
+        .filter(Boolean)
+        .join(' · ')
+    : '';
+}
+
+async function loadPractice() {
+  try {
+    renderPractice(await api('/api/admin/simulate'));
+  } catch (err) {
+    if (err.message !== 'unauthorised') toast(err.message, true);
+  }
+}
+
+$('practice-form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (practiceBusy) return;
+
+  const input = $('practice-text');
+  const text = input.value.trim();
+  if (!text) return;
+
+  practiceBusy = true;
+  input.value = '';
+  $('practice-send').disabled = true;
+
+  // Show the parent's message and a typing indicator straight away — a real
+  // model call takes a couple of seconds and a frozen screen reads as broken.
+  const thread = $('practice-thread');
+  if (thread.querySelector('.empty')) thread.innerHTML = '';
+  thread.insertAdjacentHTML(
+    'beforeend',
+    `<div class="bubble inbound"><span class="bubble-text">${escapeHtml(text)}</span><div class="bubble-meta">Tú, como el padre</div></div>
+     <div class="typing" id="practice-typing"><span></span><span></span><span></span></div>`,
+  );
+  thread.scrollTop = thread.scrollHeight;
+
+  try {
+    renderPractice(
+      await api('/api/admin/simulate', { method: 'POST', body: JSON.stringify({ text }) }),
+    );
+  } catch (err) {
+    $('practice-typing')?.remove();
+    if (err.message !== 'unauthorised') toast(err.message, true);
+  } finally {
+    practiceBusy = false;
+    $('practice-send').disabled = false;
+    input.focus();
+  }
+});
+
+$('practice-reset').addEventListener('click', async () => {
+  try {
+    renderPractice(await api('/api/admin/simulate', { method: 'DELETE' }));
+    toast('Conversación borrada');
+  } catch (err) {
+    toast(err.message, true);
+  }
+});
 
 /* --- Boot ----------------------------------------------------------------- */
 

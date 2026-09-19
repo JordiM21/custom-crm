@@ -273,10 +273,32 @@ test('a tool that escalates stops the turn, whatever the model wanted to say nex
 
   const result = await runAgent(lead.id, { text: 'dan certificado?', waMessageId: 'wamid.21' });
 
-  assert.equal(result.status, 'queued');
-  assert.equal(store.queue.length, 1);
-  assert.doesNotMatch(store.queue[0]!.body, /cien dólares/, 'the invented price never got queued');
+  assert.equal(result.status, 'no_reply', 'the drafted reply was discarded');
+  assert.equal(store.queue.length, 0, 'the invented price never got queued');
+
+  const sent = store.messages.filter((m) => m.direction === 'outbound_bot');
+  assert.equal(sent.length, 1, 'only the escalation acknowledgement went out');
+  assert.doesNotMatch(sent[0]!.body ?? '', /cien dólares/);
 
   const updated = (await store.getLeadById(lead.id))!;
   assert.equal(updated.bot_paused, true);
+});
+
+test('a parent who asks for a discount is answered, not left in silence', async () => {
+  const lead = await makeLead();
+
+  const result = await runAgent(lead.id, {
+    text: 'hay descuento por dos hermanos?',
+    waMessageId: 'wamid.22',
+  });
+
+  assert.equal(result.status, 'escalated');
+
+  // The regression this guards: the acknowledgement used to be queued, and the
+  // drain cancels queued messages for a paused lead — so the parent asked
+  // about a discount and got nothing at all.
+  const sent = store.messages.filter((m) => m.direction === 'outbound_bot');
+  assert.equal(sent.length, 1, 'the parent was told Jordi will reply');
+  assert.match(sent[0]!.body ?? '', /Jordi/);
+  assert.equal(await store.pendingQueueCount(), 0, 'nothing left stuck in the queue');
 });

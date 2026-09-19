@@ -136,6 +136,10 @@ export class MemoryStore implements Store {
       .slice(-limit);
   }
 
+  async deleteMessages(leadId: string): Promise<void> {
+    this.messages = this.messages.filter((m) => m.lead_id !== leadId);
+  }
+
   async countMessagesSince(leadId: string, direction: Direction, sinceIso: string): Promise<number> {
     return this.messages.filter(
       (m) => m.lead_id === leadId && m.direction === direction && m.created_at >= sinceIso,

@@ -45,6 +45,7 @@
         <nav class="tabs" role="tablist">
           <button class="tab" role="tab" data-page="dashboard" aria-selected="true">Resumen</button>
           <button class="tab" role="tab" data-page="leads" aria-selected="false">Contactos</button>
+          <button class="tab" role="tab" data-page="practice" aria-selected="false">Probar</button>
           <button class="tab" role="tab" data-page="setup" aria-selected="false">Conexiones</button>
         </nav>
 
@@ -92,6 +93,35 @@
           <div class="chips" id="stage-chips"></div>
 
           <div class="list" id="lead-list" style="margin-top: 14px"></div>
+        </div>
+
+        <!-- Practice -->
+        <div class="page hidden" id="page-practice">
+          <h2>Probar el bot</h2>
+          <p style="color: var(--text-2); font-size: 14px; margin: -6px 0 18px">
+            Escribe como si fueras un padre y mira exactamente qué respondería. Esta
+            conversación nunca sale a WhatsApp, ni siquiera en producción.
+          </p>
+
+          <div class="banners" id="practice-banners"></div>
+
+          <div class="practice">
+            <div class="practice-thread" id="practice-thread"></div>
+            <form class="practice-input" id="practice-form">
+              <input
+                class="control"
+                id="practice-text"
+                placeholder="hola, vi el anuncio de las clases de inglés"
+                autocomplete="off"
+              />
+              <button class="btn primary" type="submit" id="practice-send">Enviar</button>
+            </form>
+          </div>
+
+          <div class="toolbar" style="margin-top: 14px">
+            <button class="chip" id="practice-reset">Empezar de nuevo</button>
+            <span class="practice-meta" id="practice-meta"></span>
+          </div>
         </div>
 
         <!-- Setup -->

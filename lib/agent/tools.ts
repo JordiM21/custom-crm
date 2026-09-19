@@ -341,12 +341,11 @@ async function escalate(lead: Lead, input: Record<string, unknown>): Promise<Too
   const reason = String(input['reason'] ?? 'unspecified');
   const summary = String(input['summary'] ?? 'Sin resumen.');
 
-  const outcome = await escalateToHuman(lead, reason, summary);
+  await escalateToHuman(lead, reason, summary);
 
   return {
     result: { ok: true, nota: 'La conversación quedó en manos de Jordi.' },
     stopConversation: true,
-    replyOverride: outcome.ack ?? undefined,
   };
 }
 

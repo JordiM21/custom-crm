@@ -67,8 +67,7 @@ export async function runAgent(
       forced,
       `Mensaje del padre/madre: "${truncate(inbound.text, 300)}"`,
     );
-    if (escalation.ack) await queueReplies(lead, [escalation.ack]);
-    return { status: 'escalated', queued: escalation.ack ? 1 : 0, detail: forced };
+    return { status: 'escalated', queued: escalation.ackSent ? 1 : 0, detail: forced };
   }
 
   // SPEC §9: a runaway conversation escalates instead of billing forever.

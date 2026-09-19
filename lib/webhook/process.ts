@@ -2,10 +2,9 @@ import { runAgent } from '../agent/run.js';
 import { config } from '../config.js';
 import { escalateToHuman } from '../agent/escalate.js';
 import { log } from '../logger.js';
-import { drainAfterDelay } from '../queue.js';
+import { drainAfterDelay, sendNow } from '../queue.js';
 import { getStore } from '../store/index.js';
 import type { Lead } from '../store/types.js';
-import { sendText } from '../whatsapp.js';
 import {
   MEDIA_TYPES,
   messageText,
@@ -214,12 +213,11 @@ async function handleInbound(
   if (MEDIA_TYPES.has(msg.type)) {
     const fresh = (await store.getLeadById(lead.id)) ?? lead;
 
-    // Sent directly, not queued: escalation pauses the lead, and the drain
+    // Sent immediately, not queued: escalation pauses the lead, and the drain
     // correctly refuses to send queued messages for a paused lead.
-    await sendText(
-      waId,
+    await sendNow(
+      fresh,
       'me llegó tu mensaje. Jordi lo revisa y te responde personalmente en un ratito',
-      { lastInboundAt: receivedAt },
     );
 
     await escalateToHuman(

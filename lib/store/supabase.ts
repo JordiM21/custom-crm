@@ -142,6 +142,11 @@ export class SupabaseStore implements Store {
     return ((data ?? []) as Message[]).reverse();
   }
 
+  async deleteMessages(leadId: string): Promise<void> {
+    const { error } = await this.db.from('messages').delete().eq('lead_id', leadId);
+    if (error) this.fail('deleteMessages', error);
+  }
+
   async countMessagesSince(leadId: string, direction: Direction, sinceIso: string): Promise<number> {
     const { count, error } = await this.db
       .from('messages')

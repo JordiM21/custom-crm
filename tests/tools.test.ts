@@ -117,7 +117,13 @@ test('escalate_to_human pauses the bot and ends the turn', async () => {
   });
 
   assert.equal(outcome.stopConversation, true);
-  assert.ok(outcome.replyOverride, 'the parent is told someone will reply');
+
+  // The parent is told someone will reply, and told it immediately — the
+  // acknowledgement is sent rather than queued, because queueing it behind the
+  // pause this same call sets would mean it never went out.
+  const sent = store.messages.filter((m) => m.direction === 'outbound_bot');
+  assert.equal(sent.length, 1, 'the parent got an acknowledgement');
+  assert.match(sent[0]!.body ?? '', /Jordi/);
 
   const updated = (await store.getLeadById(lead.id))!;
   assert.equal(updated.bot_paused, true);

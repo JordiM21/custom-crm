@@ -1,8 +1,10 @@
+import { randomUUID } from 'node:crypto';
 import { sleep } from './async.js';
 import { getBotState } from './killswitch.js';
 import { log } from './logger.js';
 import { getStore } from './store/index.js';
-import type { QueueItem } from './store/types.js';
+import type { Lead, QueueItem } from './store/types.js';
+import { isSimulated } from './simulator.js';
 import { isWindowOpen, sendText } from './whatsapp.js';
 
 /**
@@ -24,7 +26,18 @@ export interface DrainResult {
 /** Bot messages allowed to one lead per 24h before we stop and alert (SPEC §9). */
 export const PER_LEAD_DAILY_CAP = 10;
 
-export async function drainQueue(limit = 25): Promise<DrainResult> {
+export interface DrainOptions {
+  /**
+   * Send everything pending regardless of its send time.
+   *
+   * Only the panel's practice mode passes this: the 8-45 second human delay is
+   * right for a real parent and pointless when someone is sitting in front of
+   * the screen judging the wording.
+   */
+  ignorePacing?: boolean;
+}
+
+export async function drainQueue(limit = 25, options: DrainOptions = {}): Promise<DrainResult> {
   const result: DrainResult = { sent: 0, cancelled: 0, failed: 0, skipped: 0 };
   const store = await getStore();
 
@@ -42,7 +55,10 @@ export async function drainQueue(limit = 25): Promise<DrainResult> {
     return result;
   }
 
-  const due = await store.dueQueueItems(new Date().toISOString(), limit);
+  const asOf = options.ignorePacing
+    ? new Date(Date.now() + 86_400_000).toISOString()
+    : new Date().toISOString();
+  const due = await store.dueQueueItems(asOf, limit);
 
   for (const item of due) {
     try {
@@ -78,7 +94,7 @@ async function sendQueued(item: QueueItem, result: DrainResult): Promise<void> {
     return;
   }
 
-  if (!isWindowOpen(lead.last_inbound_at)) {
+  if (!isSimulated(lead) && !isWindowOpen(lead.last_inbound_at)) {
     await store.cancelQueueForLead(lead.id, 'window_closed');
     result.cancelled += 1;
     log.warn('queue.cancelled_window_closed', {
@@ -107,7 +123,9 @@ async function sendQueued(item: QueueItem, result: DrainResult): Promise<void> {
     return;
   }
 
-  const send = await sendText(lead.wa_id, item.body, { lastInboundAt: lead.last_inbound_at });
+  const send = isSimulated(lead)
+    ? { ok: true as const, skipped: 'dry_run' as const }
+    : await sendText(lead.wa_id, item.body, { lastInboundAt: lead.last_inbound_at });
 
   if (!send.ok) {
     await store.markQueueFailed(item.id, send.error ?? 'unknown');
@@ -118,7 +136,7 @@ async function sendQueued(item: QueueItem, result: DrainResult): Promise<void> {
   await store.markQueueSent(item.id);
   await store.insertMessage({
     lead_id: lead.id,
-    wa_message_id: send.waMessageId ?? `local.${item.id}`,
+    wa_message_id: 'waMessageId' in send && send.waMessageId ? send.waMessageId : `local.${item.id}`,
     direction: 'outbound_bot',
     body: item.body,
     raw: { queue_id: item.id, dry_run: Boolean(send.skipped) },
@@ -130,6 +148,53 @@ async function sendQueued(item: QueueItem, result: DrainResult): Promise<void> {
 
 function leadName(display: string | null, profile: string | null, waId: string): string {
   return display ?? profile ?? waId;
+}
+
+/**
+ * Sends one message right now, bypassing the queue.
+ *
+ * The queue is the right path for everything the agent says, because the drain
+ * re-checks `bot_paused` before each send. That check is exactly wrong for the
+ * two messages that accompany a handoff — the escalation acknowledgement and
+ * the reply to an unsupported photo or voice note. Both are queued at the same
+ * moment the lead is paused, so the drain would cancel them and the parent
+ * would get silence at the worst possible moment: right after asking about a
+ * discount, or right after sending a photo.
+ *
+ * Pacing does not apply either. These lines are an acknowledgement, and an
+ * acknowledgement that arrives 40 seconds later is not an acknowledgement.
+ */
+export async function sendNow(lead: Lead, body: string): Promise<boolean> {
+  const store = await getStore();
+
+  const botState = await getBotState();
+  if (!botState.enabled) {
+    log.warn('outbound.suppressed_kill_switch', {
+      lead_id: lead.id,
+      human: 'El bot está apagado, así que no se envió el aviso al contacto.',
+    });
+    return false;
+  }
+
+  const send = isSimulated(lead)
+    ? { ok: true as const, skipped: 'dry_run' as const, waMessageId: undefined }
+    : await sendText(lead.wa_id, body, { lastInboundAt: lead.last_inbound_at });
+
+  if (!send.ok) {
+    log.warn('outbound.immediate_failed', { lead_id: lead.id, error: send.error });
+    return false;
+  }
+
+  await store.insertMessage({
+    lead_id: lead.id,
+    wa_message_id: send.waMessageId ?? `local.now.${randomUUID()}`,
+    direction: 'outbound_bot',
+    body,
+    raw: { immediate: true, dry_run: Boolean(send.skipped) },
+  });
+  await store.updateLead(lead.id, { last_message_at: new Date().toISOString() });
+
+  return true;
 }
 
 /**

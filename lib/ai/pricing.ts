@@ -3,14 +3,15 @@ import { config } from '../config.js';
 /**
  * Cost estimation for the per-lead spend ceiling (SPEC §9).
  *
- * These are estimates, not billing. Set AI_PRICE_IN_PER_MTOK and
- * AI_PRICE_OUT_PER_MTOK from whichever provider is chosen — the defaults are
- * deliberately pessimistic so an unconfigured deployment over-counts spend and
- * escalates early rather than running up a bill silently.
+ * These are estimates, not billing. The defaults are Claude Haiku 4.5's rates,
+ * the configured model. On any other provider or model, set
+ * AI_PRICE_IN_PER_MTOK and AI_PRICE_OUT_PER_MTOK from its pricing page —
+ * otherwise the ceiling is measured in the wrong currency, so to speak, and
+ * either never trips or trips far too early.
  */
 
-const DEFAULT_IN_PER_MTOK = 3;
-const DEFAULT_OUT_PER_MTOK = 15;
+const DEFAULT_IN_PER_MTOK = 1;
+const DEFAULT_OUT_PER_MTOK = 5;
 
 function price(name: string, fallback: number): number {
   const v = Number.parseFloat(process.env[name] ?? '');
