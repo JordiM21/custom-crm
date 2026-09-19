@@ -12,8 +12,8 @@ import { findPlan, planIds } from '../plans.js';
 import { getStore } from '../store/index.js';
 import { isStage, type Lead, type Stage } from '../store/types.js';
 import { formatSlotForParent } from '../timezone.js';
-import { alertOwner } from '../whatsapp.js';
-import { escalateToHuman } from './escalate.js';
+import { notifyOwner } from '../notify.js';
+import { escalateToHuman, leadUrl } from './escalate.js';
 
 /**
  * The six tools from SPEC §6. Every one has real side effects.
@@ -285,16 +285,17 @@ async function bookTrial(lead: Lead, input: Record<string, unknown>): Promise<To
 
   const label = formatSlotForParent(new Date(slotStart), config.booking.timezone);
 
-  await alertOwner(
-    [
-      `Clase de prueba agendada.`,
-      ``,
+  await notifyOwner({
+    kind: 'booking',
+    title: `Clase de prueba agendada: ${studentName}`,
+    body: [
       `${studentName}${Number.isFinite(studentAge) ? `, ${studentAge} años` : ''}`,
       `Cuándo: ${label}`,
       `Padre/madre: ${parentName || lead.profile_name || '—'}`,
-      `WhatsApp: wa.me/${lead.wa_id}`,
+      `WhatsApp: https://wa.me/${lead.wa_id}`,
     ].join('\n'),
-  );
+    url: leadUrl(lead.id),
+  });
 
   return {
     result: {

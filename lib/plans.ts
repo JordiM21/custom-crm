@@ -15,6 +15,8 @@ export interface Plan {
   description: string;
   stripePriceId: string;
   monthlyUsd: number;
+  /** False for a one-off payment like the Plan Inicial. */
+  recurring?: boolean;
 }
 
 let cache: Plan[] | null = null;

@@ -171,6 +171,7 @@ async function loadState() {
   renderActivity(data.activity);
   renderChecklist(data.checklist);
   renderPlans(data.plans);
+  renderNotify(data.notifyChannels);
   renderKnowledge(data.knowledge);
   renderBotSwitch(data.bot);
 }
@@ -598,6 +599,41 @@ function renderChecklist(checks) {
     )
     .join('');
 }
+
+const CHANNEL_LABELS = { whatsapp: 'WhatsApp', email: 'correo', webhook: 'webhook' };
+
+function renderNotify(channels) {
+  const status = $('notify-status');
+  const names = (channels || []).map((c) => CHANNEL_LABELS[c] || c);
+
+  if (names.length === 0) {
+    status.innerHTML =
+      'Ningún canal configurado. Cuando un padre necesite que respondas tú, solo lo verás si abres el panel.';
+  } else if (names.length === 1 && channels[0] === 'whatsapp') {
+    status.innerHTML =
+      'Solo por WhatsApp. Ojo: WhatsApp rechaza el aviso si tú no le escribiste al número del negocio en las últimas 24 horas. Vale la pena agregar correo o webhook.';
+  } else {
+    status.innerHTML = `Te avisamos por ${escapeHtml(names.join(' y '))}.`;
+  }
+
+  $('notify-test').disabled = names.length === 0;
+}
+
+$('notify-test').addEventListener('click', async () => {
+  const button = $('notify-test');
+  button.disabled = true;
+  button.textContent = 'Enviando...';
+
+  try {
+    const result = await api('/api/admin/notify-test', { method: 'POST' });
+    toast(result.message, result.silent);
+  } catch (err) {
+    toast(err.message, true);
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Mandarme un aviso de prueba';
+  }
+});
 
 function renderPlans(plans) {
   if (!plans || plans.length === 0) {

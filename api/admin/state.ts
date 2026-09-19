@@ -6,6 +6,7 @@ import { sendJson, type Req, type Res } from '../../lib/http.js';
 import { recentEvents } from '../../lib/logger.js';
 import { getBotState } from '../../lib/killswitch.js';
 import { loadPlans } from '../../lib/plans.js';
+import { configuredChannels } from '../../lib/notify.js';
 import { getStore, isDemoMode } from '../../lib/store/index.js';
 
 /**
@@ -67,6 +68,21 @@ export default async function handler(req: Req, res: Res): Promise<void> {
     });
   }
 
+  const channels = configuredChannels();
+  if (channels.length === 0) {
+    warnings.push({
+      level: 'error',
+      message:
+        'No hay forma de avisarte cuando un padre necesite que respondas tú. Configura al menos un canal en Conexiones.',
+    });
+  } else if (channels.length === 1 && channels[0] === 'whatsapp') {
+    warnings.push({
+      level: 'warn',
+      message:
+        'Solo te avisamos por WhatsApp, y WhatsApp rechaza el aviso si tú no le escribiste al número del negocio en las últimas 24 horas. Agrega correo o webhook como respaldo.',
+    });
+  }
+
   if (!plans.some((p) => p.stripePriceId)) {
     warnings.push({
       level: 'info',
@@ -83,6 +99,7 @@ export default async function handler(req: Req, res: Res): Promise<void> {
     ai: { provider: getProvider().name, real: isRealProvider() },
     knowledge: { complete: knowledgeIsComplete(), missing: knowledge.unfilled.slice(0, 12) },
     plans: plans.map((p) => ({ id: p.id, label: p.label, ready: Boolean(p.stripePriceId) })),
+    notifyChannels: configuredChannels(),
     checklist,
     warnings,
     activity: recentEvents(60).map((e) => ({

@@ -3,27 +3,38 @@
     "JORDI: los planes que el asistente puede ofrecer.",
     "El asistente NUNCA construye un precio: solo puede mandar el link de un plan que esté aquí.",
     "",
+    "Los precios salen de tu base de conocimiento de Google Drive:",
+    "  Plan Inicial  — USD 15, pago único, 2 semanas",
+    "  Plan Completo — USD 50 al mes",
+    "",
     "Cómo llenar stripePriceId:",
     "  1. Entra a Stripe → Products → crea un producto por plan.",
-    "  2. Dentro del producto, copia el ID del precio (empieza con price_...).",
-    "  3. Pégalo aquí y vuelve a desplegar.",
+    "  2. En el Plan Inicial marca el precio como 'One time'.",
+    "     En el Plan Completo márcalo como 'Recurring / Monthly'.",
+    "  3. Copia el ID del precio (empieza con price_) y pégalo aquí.",
+    "  4. Vuelve a desplegar.",
     "",
-    "Mientras stripePriceId esté vacío, el asistente no puede mandar el link y te pasa el lead a ti."
+    "Mientras stripePriceId esté vacío, el asistente no puede mandar el link y te pasa el lead a ti.",
+    "",
+    "El descuento por hermanos (el segundo estudiante paga la mitad) NO está aquí:",
+    "esos cobros los haces tú, porque requieren dos estudiantes en un mismo pago."
   ],
   "plans": [
     {
-      "id": "completo",
-      "label": "Plan Completo",
-      "description": "Plan mensual completo de clases de inglés",
+      "id": "inicial",
+      "label": "Plan Inicial",
+      "description": "Programa introductorio de 2 semanas: 4 clases en vivo de 1 hora + presentación final",
       "stripePriceId": "",
-      "monthlyUsd": 50
+      "monthlyUsd": 15,
+      "recurring": false
     },
     {
-      "id": "prueba",
-      "label": "Clase de prueba",
-      "description": "Clase de prueba individual",
+      "id": "completo",
+      "label": "Plan Completo",
+      "description": "Plan mensual: grupos de máximo 4 estudiantes, 10 niveles de 2 meses",
       "stripePriceId": "",
-      "monthlyUsd": 0
+      "monthlyUsd": 50,
+      "recurring": true
     }
   ]
 }

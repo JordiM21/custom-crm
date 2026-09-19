@@ -99,11 +99,11 @@ test('the kill switch stops replies but not recording', async () => {
   assert.equal(store.messages.length, 1, 'the inbound message is still stored');
 });
 
-test('a discount request escalates without asking the model', async () => {
+test('a price negotiation escalates without asking the model', async () => {
   const lead = await makeLead();
 
   const result = await runAgent(lead.id, {
-    text: 'hola, tienen algun descuento por dos hermanos?',
+    text: 'me lo dejas un poco mas barato?',
     waMessageId: 'wamid.5',
   });
 
@@ -114,6 +114,43 @@ test('a discount request escalates without asking the model', async () => {
   assert.equal(updated.bot_paused, true);
   assert.equal(updated.bot_paused_reason, 'escalated:price_negotiation');
   assert.equal(updated.stage, 'human_handling');
+});
+
+test('the sibling discount is answered, because the knowledge file documents it', async () => {
+  const lead = await makeLead();
+
+  const result = await runAgent(lead.id, {
+    text: 'hola, tienen algun descuento por dos hermanos?',
+    waMessageId: 'wamid.5b',
+  });
+
+  // Escalating this would send one of the ten most common questions in the
+  // business to Jordi every time, which is the opposite of the point.
+  assert.equal(result.status, 'queued');
+  assert.ok(provider.lastRequest, 'the model was asked');
+  assert.equal((await store.getLeadById(lead.id))!.bot_paused, false);
+});
+
+test('asking for more on top of the sibling discount still escalates', async () => {
+  const lead = await makeLead();
+
+  const result = await runAgent(lead.id, {
+    text: 'ya se lo del descuento de hermanos, pero me puedes hacer un precio mejor?',
+    waMessageId: 'wamid.5c',
+  });
+
+  assert.equal(result.status, 'escalated');
+});
+
+test('a generic discount request with no sibling context escalates', async () => {
+  const lead = await makeLead();
+
+  const result = await runAgent(lead.id, {
+    text: 'tienen algun descuento?',
+    waMessageId: 'wamid.5d',
+  });
+
+  assert.equal(result.status, 'escalated');
 });
 
 test('a message about a learning difficulty escalates', async () => {
@@ -284,11 +321,11 @@ test('a tool that escalates stops the turn, whatever the model wanted to say nex
   assert.equal(updated.bot_paused, true);
 });
 
-test('a parent who asks for a discount is answered, not left in silence', async () => {
+test('a parent whose question is escalated is answered, not left in silence', async () => {
   const lead = await makeLead();
 
   const result = await runAgent(lead.id, {
-    text: 'hay descuento por dos hermanos?',
+    text: 'puedo pagar por clase en vez de mensual?',
     waMessageId: 'wamid.22',
   });
 

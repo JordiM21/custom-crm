@@ -93,6 +93,21 @@ export const config = {
     ownerWhatsapp: str('OWNER_WHATSAPP_NUMBER'),
     cronSecret: str('CRON_SECRET'),
   },
+
+  /**
+   * How Jordi is told a parent needs him. More than one channel on purpose:
+   * WhatsApp alerts to his own number are rejected whenever he has not written
+   * to the business number in 24 hours.
+   */
+  notify: {
+    resendApiKey: str('RESEND_API_KEY'),
+    emailTo: str('NOTIFY_EMAIL_TO'),
+    emailFrom: str('NOTIFY_EMAIL_FROM', 'LET Junior <onboarding@resend.dev>'),
+    webhookUrl: str('NOTIFY_WEBHOOK_URL'),
+  },
+
+  /** Public URL of the panel, used to deep-link a contact from an alert. */
+  publicUrl: str('PUBLIC_URL', str('VERCEL_URL') ? `https://${str('VERCEL_URL')}` : ''),
 } as const;
 
 /** True when the service is allowed to put real messages on a real phone. */
@@ -191,14 +206,22 @@ export function setupChecklist(): SetupCheck[] {
     order: 4,
   });
 
+  const channels: string[] = [];
+  if (config.ops.ownerWhatsapp) channels.push('WhatsApp');
+  if (config.notify.resendApiKey && config.notify.emailTo) channels.push('correo');
+  if (config.notify.webhookUrl) channels.push('webhook');
+
   checks.push({
     id: 'owner',
-    label: 'Tu número de WhatsApp',
-    status: config.ops.ownerWhatsapp ? 'ready' : 'missing',
-    detail: config.ops.ownerWhatsapp
-      ? 'Las alertas y los contactos que necesitan atención te llegan por WhatsApp.'
-      : 'No te vamos a poder avisar cuando un padre necesite que respondas tú. Pon OWNER_WHATSAPP_NUMBER.',
-    vars: ['OWNER_WHATSAPP_NUMBER'],
+    label: 'Cómo te avisamos',
+    status: channels.length >= 2 ? 'ready' : channels.length === 1 ? 'partial' : 'missing',
+    detail:
+      channels.length === 0
+        ? 'No te vamos a poder avisar cuando un padre necesite que respondas tú. El contacto solo aparecerá en el panel.'
+        : channels.length === 1 && channels[0] === 'WhatsApp'
+          ? 'Solo por WhatsApp. Ojo: WhatsApp rechaza el aviso si tú no le escribiste al número del negocio en las últimas 24 horas. Agrega correo o webhook como respaldo.'
+          : `Te avisamos por ${channels.join(' y ')}.`,
+    vars: ['OWNER_WHATSAPP_NUMBER', 'RESEND_API_KEY', 'NOTIFY_EMAIL_TO', 'NOTIFY_WEBHOOK_URL'],
     order: 5,
   });
 

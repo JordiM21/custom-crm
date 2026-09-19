@@ -40,7 +40,10 @@ const ESCALATION_RULES = `## Cuándo pasar la conversación a Jordi (obligatorio
 
 Usa escalate_to_human de inmediato si ocurre cualquiera de estas cosas:
 
-- El padre pide un descuento, negocia el precio o pregunta por promociones.
+- El padre negocia el precio: pide una rebaja además del descuento por hermanos,
+  un precio especial, pagar por clase, en cuotas, o cualquier forma de pago distinta.
+  (El descuento por hermanos SÍ lo puedes responder: está en la información de arriba.)
+- El padre quiere que le confirmes un cupo en horario de la mañana.
 - Hay una queja, un reclamo o una solicitud de reembolso.
 - Se menciona una dificultad de aprendizaje, una discapacidad, un tema de salud
   o el bienestar emocional del niño.
@@ -151,14 +154,37 @@ Mientras esto sea así:
  * wrong costs a customer or hurts a child.
  */
 const ESCALATION_KEYWORDS: { pattern: RegExp; reason: string }[] = [
-  { pattern: /\b(descuento|rebaja|promoci[oó]n|oferta especial|m[aá]s barato|me lo dejas|precio especial)\b/i, reason: 'price_negotiation' },
   { pattern: /\b(reembolso|devoluci[oó]n|devu[eé]lv|me devuelven|cancelar el pago|contracargo)\b/i, reason: 'refund_request' },
   { pattern: /\b(queja|reclamo|estafa|fraude|denuncia|demanda|abogado)\b/i, reason: 'complaint' },
   { pattern: /\b(autis|asperger|tdah|d[ée]ficit de atenci[oó]n|dislexia|discapacidad|necesidades especiales|terapia|psic[oó]log)\b/i, reason: 'child_wellbeing' },
   { pattern: /\b(bullying|acoso|deprimid|ansiedad|problema emocional)\b/i, reason: 'child_wellbeing' },
 ];
 
+/**
+ * Price talk is handled separately, because one discount question has a
+ * documented answer and the rest do not.
+ *
+ * The knowledge file states the sibling offer outright: a second student pays
+ * half price, on either plan. Escalating that question would send one of the
+ * ten most common questions in the business to Jordi every single time, which
+ * defeats the point of having written the answer down.
+ *
+ * Everything past that documented offer — a further discount, a special price,
+ * per-class or instalment payments — is a negotiation, and negotiations are
+ * Jordi's.
+ */
+const NEGOTIATION = /\b(rebaja|m[aá]s barato|me lo dejas?|precio especial|cuotas?|por clase|pagar menos|mejor precio|hacer un precio|financia)\b/i;
+const DISCOUNT_WORD = /\b(descuento|promoci[oó]n|oferta)\b/i;
+const SIBLING_CONTEXT = /\b(hermanit[oa]s?|herman[oa]s?|dos (hij[oa]s|ni[nñ][oa]s|peques)|mis hij[oa]s|segund[oa] (hij[oa]|estudiante|ni[nñ][oa]))\b/i;
+
 export function detectMandatoryEscalation(text: string): string | null {
+  if (NEGOTIATION.test(text)) return 'price_negotiation';
+
+  if (DISCOUNT_WORD.test(text)) {
+    // The sibling offer is in the knowledge file, so let the model answer it.
+    if (!SIBLING_CONTEXT.test(text)) return 'price_negotiation';
+  }
+
   for (const { pattern, reason } of ESCALATION_KEYWORDS) {
     if (pattern.test(text)) return reason;
   }

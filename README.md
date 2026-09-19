@@ -1,64 +1,66 @@
-# LET Junior — WhatsApp AI Sales Agent
+# LET Junior — Asistente de ventas por WhatsApp
 
-A service that answers WhatsApp messages from parents in Spanish, qualifies
-them, books trial classes, sends payment links, and hands the conversation to
-Jordi the moment a human is needed.
+Un servicio que responde los mensajes de WhatsApp de los papás en español, los
+califica, agenda clases de prueba, manda links de pago, y te pasa la
+conversación a ti en el momento en que hace falta una persona.
 
-Built to `SPEC.md`, milestones M1 through M5. **Nothing is connected to a real
-account yet.** Everything below is what you do to connect it.
+Construido según `SPEC.md`, milestones M1 a M5.
+
+> There is an English version of this document in [`README.en.md`](README.en.md).
 
 ---
 
-## Read this first: what actually exists right now
+## Léelo primero: qué existe hoy
 
-| Part | State |
+| Parte | Estado |
 |---|---|
-| Practice mode: talk to the bot without WhatsApp | Done — see the next section |
-| Webhook, signature check, deduplication | Done, tested |
-| Lead capture and ad attribution (`ctwa_clid`) | Done, tested |
-| Handoff when you reply from your phone | Done, tested |
-| The agent: prompt, history, pacing, 2-message cap | Done, tested |
-| The six tools: calendar, booking, Stripe, escalation, lead updates, tracking | Done, tested |
-| Admin panel | Done |
-| Sending conversions to Meta (M6) | **Not built.** Events are recorded and wait in the database. |
-| Template messages for cold leads, voice notes, images | **Not built.** Out of scope for v1. |
+| Modo prueba: hablar con el bot sin WhatsApp | Listo — ver la siguiente sección |
+| Webhook, verificación de firma, no duplicar mensajes | Listo y probado |
+| Captura de contactos y atribución de anuncios (`ctwa_clid`) | Listo y probado |
+| El bot se calla cuando respondes desde tu teléfono | Listo y probado |
+| El agente: prompt, historial, ritmo de respuesta, tope de 2 mensajes | Listo y probado |
+| Las seis herramientas: calendario, agendar, Stripe, escalar, actualizar contacto, seguimiento | Listo y probado |
+| Panel de administración | Listo |
+| Avisarte por WhatsApp, correo y webhook | Listo y probado |
+| Mandar conversiones a Meta (M6) | **Sin construir.** Los eventos se guardan y esperan en la base de datos. |
+| Mensajes de plantilla, notas de voz, imágenes | **Sin construir.** Fuera del alcance de la v1. |
 
-118 automated tests pass. What is *not* tested is anything touching a real
-account, because there are no real accounts yet.
+128 pruebas automáticas pasan. Lo que **no** está probado es todo lo que toca
+una cuenta real, porque todavía no hay cuentas conectadas.
 
-**Right now the system runs in demo mode:** fake database, fake AI replies,
-nothing sent to WhatsApp. That is deliberate. You can open the panel and use it
-today, and each thing you connect switches a piece from fake to real.
+**Ahora mismo el sistema corre en modo demostración:** base de datos falsa,
+respuestas falsas, nada se envía a WhatsApp. Es a propósito. Puedes abrir el
+panel y usarlo hoy, y cada cosa que conectes cambia una pieza de falsa a real.
 
 ---
 
-## See it running in two minutes
+## Verlo funcionando en dos minutos
 
 ```bash
 npm install
 npm run dev:local
 ```
 
-Open <http://localhost:3000>. You get the panel with eight invented contacts and
-their conversations. Nothing you do there touches a real phone.
+Abre <http://localhost:3000>. Vas a ver el panel con ocho contactos inventados
+y sus conversaciones. Nada de lo que hagas ahí toca un teléfono real.
 
 ---
 
-# Testing today, without WhatsApp
+# Probarlo hoy, sin WhatsApp
 
-Connecting WhatsApp takes days of Meta paperwork. You do not have to wait for
-it to find out whether the bot sounds right. This path takes about half an hour
-and needs one account: Anthropic.
+Conectar WhatsApp lleva días de papeleo con Meta. No tienes que esperar a eso
+para saber si el bot suena bien. Este camino toma media hora y necesita una
+sola cuenta: Anthropic.
 
-## 1. Get an Anthropic API key (5 min)
+## 1. Consigue una clave de Anthropic (5 min)
 
-1. [console.anthropic.com](https://console.anthropic.com) → sign in.
-2. **Settings → Billing** → add a payment method and a small amount of credit.
-   USD 5 lasts a very long time at this volume — see the cost note below.
-3. **API keys → Create key**. Copy it. It starts with `sk-ant-`. You only see
-   it once.
+1. Entra a [console.anthropic.com](https://console.anthropic.com).
+2. **Settings → Billing** → agrega una tarjeta y algo de saldo. Con USD 5
+   tienes para muchísimo tiempo a este volumen (ver el costo más abajo).
+3. **API keys → Create key**. Cópiala. Empieza con `sk-ant-`. Solo la ves una
+   vez.
 
-## 2. Run it on your own machine (10 min)
+## 2. Córrelo en tu computadora (10 min)
 
 ```bash
 git clone https://github.com/JordiM21/custom-crm.git
@@ -67,7 +69,7 @@ npm install
 cp .env.example .env.local
 ```
 
-Open `.env.local` and set three lines:
+Abre `.env.local` y pon solo estas tres líneas:
 
 ```
 AI_PROVIDER=anthropic
@@ -75,170 +77,169 @@ ANTHROPIC_API_KEY=sk-ant-...tu-clave...
 ANTHROPIC_MODEL=claude-haiku-4-5
 ```
 
-Leave everything else empty. Then:
+Deja todo lo demás vacío. Después:
 
 ```bash
 npm run dev:local
 ```
 
-Open <http://localhost:3000>. No password needed while `ADMIN_PASSWORD` is
-empty, and no database is needed — it runs on demo data.
+Abre <http://localhost:3000>. No hace falta contraseña mientras
+`ADMIN_PASSWORD` esté vacío, y no hace falta base de datos: corre con datos de
+ejemplo.
 
-## 3. Talk to it (20 min, and the part that matters)
+## 3. Habla con él (20 min, y es la parte que importa)
 
-Go to the **Probar** tab. Write as if you were a parent. The bot answers with
-the real model, using the real prompt and the real knowledge file. Nothing is
-ever sent to WhatsApp from this screen, even in production.
+Entra a la pestaña **Probar**. Escribe como si fueras un papá. El bot responde
+con el modelo real, usando el prompt real y la información real del negocio.
+Desde esa pantalla nunca sale nada a WhatsApp, ni siquiera en producción.
 
-Things worth trying, because each one exercises a different rule:
+Vale la pena probar esto, porque cada mensaje ejercita una regla distinta:
 
-| Type this | What should happen |
+| Escribe esto | Qué debería pasar |
 |---|---|
-| `hola` | A short greeting and **one** question. Never a price. |
-| `cuanto cuesta?` | It should ask the child's age first, not quote a price. |
-| `tiene 9 años, se llama Sofía` | It should save the name and age — check the line under the chat. |
-| `hay descuento por dos hermanos?` | Straight to you. Stage becomes "Atendido por Jordi". |
-| `quiero que me devuelvan el dinero` | Same — refunds never reach the model. |
-| `mi hijo tiene dislexia, sirve?` | Same — anything about a child's wellbeing is yours. |
-| `esto es un bot?` | It should say it is an assistant and that you read everything. |
+| `hola` | Un saludo corto y **una** sola pregunta. Nunca un precio. |
+| `cuanto cuesta?` | Debería preguntar la edad del niño antes de dar precios. |
+| `tiene 9 años, se llama Sofía` | Debería guardar nombre y edad — míralo en la línea debajo del chat. |
+| `tienen descuento por dos hermanos?` | **Debería responder que sí**, el segundo paga mitad. Está en la información. |
+| `me puedes hacer un precio mejor?` | Directo a ti. La etapa pasa a "Atendido por Jordi". |
+| `quiero que me devuelvan el dinero` | Igual — los reembolsos nunca llegan al modelo. |
+| `mi hijo tiene dislexia, sirve?` | Igual — cualquier tema del niño es tuyo. |
+| `esto es un bot?` | Debería decir que es un asistente y que tú lees todo. |
 
-**"Empezar de nuevo"** wipes the conversation so you can test another opening.
+**"Empezar de nuevo"** borra la conversación para que pruebes otra apertura.
 
-While `knowledge/business.md` still has blanks, the bot will refuse to give
-prices and schedules. That is correct behaviour, not a bug — the panel says so
-above the chat.
+## 4. Hacer que suene como tú
 
-## 4. Make it sound like you
+Este es el ciclo que de verdad mejora el bot, y es todo lo que la gente quiere
+decir cuando habla de "entrenarlo":
 
-This is the loop that actually improves the bot, and it is the whole of what
-people mean by "training" here:
+1. Lee una respuesta en **Probar** que no te guste.
+2. Decide qué tipo de problema es:
+   - **Dato equivocado** (precio, horario, política) → arregla
+     `knowledge/business.md`.
+   - **Tono o comportamiento equivocado** (muy formal, dos preguntas juntas,
+     vende demasiado pronto) → dímelo y cambio las reglas del prompt.
+3. Reinicia (`Ctrl+C` y otra vez `npm run dev:local`) y prueba el mismo
+   mensaje.
 
-1. Read a reply in **Probar** that feels wrong.
-2. Decide which it is:
-   - **Wrong fact** (price, schedule, policy) → fix `knowledge/business.md`.
-   - **Wrong tone or behaviour** (too formal, two questions at once, pitches
-     too early) → tell me and I will change the prompt rules.
-3. Restart (`Ctrl+C`, then `npm run dev:local`) and try the same message again.
+Casi todo lo que vas a querer cambiar está en el archivo de información, no en
+el prompt.
 
-Most of what you will want to change is the knowledge file, not the prompt.
+## Qué NO prueba esto
 
-## What this does NOT test
+- Nada de Meta: recibir mensajes reales, el traspaso cuando respondes desde tu
+  teléfono, la ventana de 24 horas. Eso necesita el paso 4 de la instalación.
+- Google Calendar y Stripe, salvo que los conectes.
+- El ritmo de respuesta. El modo prueba responde al instante a propósito; en un
+  número real las respuestas esperan entre 8 y 45 segundos.
 
-- Anything Meta-related: receiving real messages, the handoff when you reply
-  from your phone, the 24-hour window. Those need Step 4 of the setup.
-- Google Calendar and Stripe, unless you connect them.
-- Message pacing. Practice mode answers instantly on purpose; on a real number
-  replies wait 8-45 seconds.
+## Cuánto cuesta
 
-## What this costs
+Claude Haiku 4.5 cuesta USD 1 por millón de tokens de entrada y USD 5 por
+millón de salida. Una conversación completa con un papá está en el orden de un
+centavo de dólar. Una tarde entera de pruebas no llega a un dólar.
 
-Claude Haiku 4.5 is USD 1 per million input tokens and USD 5 per million
-output tokens. A full conversation with a parent is on the order of a US cent.
-An afternoon of testing is well under a dollar. Each conversation's exact cost
-shows under the chat and on the contact's detail panel, and
-`AI_COST_CEILING_USD` hands any single conversation to you once it passes that
-amount, so a loop cannot run up a bill.
-
----
-
-# Putting it live, in order
-
-Do these in order. Each one says what breaks if you skip it. The panel's
-**Conexiones** page shows the same list, live, so you can always see where you
-are without reading this file again.
-
-**Never send me a password, key or token in a chat message.** Every secret goes
-straight into Vercel. When a step is done, just tell me "step 3 done".
+El costo exacto de cada conversación aparece debajo del chat y en la ficha del
+contacto, y `AI_COST_CEILING_USD` te pasa cualquier conversación que se pase de
+ese monto, así que un bucle no te puede generar una factura.
 
 ---
 
-## Step 0 — The blocker: can your number even be used?
+# Ponerlo en vivo, en orden
 
-**Do this before anything else.** Everything depends on it.
+Haz esto en orden. Cada paso dice qué se rompe si te lo saltas. La página
+**Conexiones** del panel muestra la misma lista, en vivo, para que siempre
+sepas dónde estás sin volver a leer este archivo.
 
-Your WhatsApp number may currently be tied to another provider (Kommo, or
-whatever you used before). A number can only be connected to one platform at a
-time. If it is tied elsewhere, it has to be released before Meta's Cloud API can
-use it.
-
-What to check, in [business.facebook.com](https://business.facebook.com) →
-WhatsApp Accounts:
-
-1. Is your number listed there?
-2. Is it connected to another provider (a "BSP")?
-3. Does Meta offer you the **coexistence** option for it? Coexistence is what
-   lets you keep using the WhatsApp Business app on your phone *and* have this
-   service answer at the same time. It is the whole design of this system.
-
-**Tell me what you find.** If the number is locked to another provider, that is
-the first thing to solve and no other step matters until it is done.
-
-One rule to remember forever: with coexistence, **you must open the WhatsApp
-Business app on your phone at least once every 13 days** or the connection goes
-inactive.
+**Nunca me mandes una contraseña, clave o token por chat.** Todos los secretos
+van directo a Vercel. Cuando termines un paso, dime "paso 3 listo".
 
 ---
 
-## Step 1 — Put it online (Vercel)
+## Paso 0 — El bloqueo: ¿tu número se puede usar?
 
-1. Go to [vercel.com](https://vercel.com), sign in with GitHub.
-2. **Add New → Project**, pick `JordiM21/custom-crm`.
-3. Framework preset: **Other**. Don't change anything else.
+**Haz esto antes que nada.** Todo lo demás depende de esto.
+
+Tu número de WhatsApp puede estar atado todavía a otro proveedor (Kommo, o lo
+que hayas usado antes). Un número solo puede estar conectado a una plataforma a
+la vez. Si está atado a otro lado, hay que liberarlo antes de que la Cloud API
+de Meta lo pueda usar.
+
+Qué revisar, en [business.facebook.com](https://business.facebook.com) →
+Cuentas de WhatsApp:
+
+1. ¿Aparece tu número ahí?
+2. ¿Está conectado a otro proveedor (un "BSP")?
+3. ¿Meta te ofrece la opción de **coexistencia** para ese número? La
+   coexistencia es lo que te deja seguir usando la app de WhatsApp Business en
+   tu teléfono *y* que este servicio conteste al mismo tiempo. Es el diseño
+   completo de este sistema.
+
+**Dime qué encuentras.** Si el número está bloqueado con otro proveedor, eso es
+lo primero que hay que resolver y ningún otro paso importa hasta que esté hecho.
+
+Una regla para recordar siempre: con coexistencia, **tienes que abrir la app de
+WhatsApp Business en tu teléfono al menos una vez cada 13 días** o la conexión
+se desactiva.
+
+---
+
+## Paso 1 — Ponerlo en línea (Vercel)
+
+1. Entra a [vercel.com](https://vercel.com) con tu cuenta de GitHub.
+2. **Add New → Project**, elige `JordiM21/custom-crm`.
+3. Framework preset: **Other**. No cambies nada más.
 4. Deploy.
 
-You get a URL like `https://custom-crm-xxxx.vercel.app`. The panel is at that
-URL. It still runs on demo data.
+Te queda una dirección tipo `https://custom-crm-xxxx.vercel.app`. El panel está
+ahí. Todavía corre con datos de ejemplo.
 
-Then set the first two variables, in **Settings → Environment Variables**:
+Después pon las dos primeras variables, en **Settings → Environment
+Variables**:
 
-| Variable | Value |
+| Variable | Valor |
 |---|---|
-| `ADMIN_PASSWORD` | A long password you invent. This is what opens the panel. |
-| `SESSION_SECRET` | Any long random string. |
+| `ADMIN_PASSWORD` | Una contraseña larga que inventes. Es la que abre el panel. |
+| `SESSION_SECRET` | Cualquier texto largo y aleatorio. |
 
-After adding variables you must **Deployments → ⋯ → Redeploy** for them to take
-effect. That is true for every step below.
+Cada vez que agregues variables tienes que ir a **Deployments → ⋯ → Redeploy**
+para que tomen efecto. Esto aplica a todos los pasos de abajo.
 
-**If you skip this:** the panel is open to anyone who finds the URL.
+**Si te lo saltas:** cualquiera que encuentre la dirección puede abrir el panel.
 
-**Send me:** the Vercel URL.
+**Mándame:** la dirección de Vercel.
 
 ---
 
-## Step 2 — The database (Supabase)
+## Paso 2 — La base de datos (Supabase)
 
-Without this, every contact and conversation disappears on each deploy.
+Sin esto, cada contacto y cada conversación desaparecen en cada despliegue.
 
-1. [supabase.com](https://supabase.com) → new project. Free tier is enough.
-   Pick a region close to Latin America (`us-east-1` is fine).
-2. Wait for it to finish provisioning.
-3. Left menu → **SQL Editor** → **New query**.
-4. Open `db/schema.sql` from this repo, copy all of it, paste, **Run**.
-   It should say success. It is safe to run twice.
-5. Left menu → **Project Settings → API**. Copy two things:
+1. [supabase.com](https://supabase.com) → nuevo proyecto. El plan gratis
+   alcanza. Elige una región cercana a Latinoamérica (`us-east-1` sirve).
+2. Espera a que termine de crearse.
+3. Menú izquierdo → **SQL Editor** → **New query**.
+4. Abre `db/schema.sql` de este repositorio, copia todo, pégalo y dale **Run**.
+   Debería decir que salió bien. Se puede correr dos veces sin problema.
+5. Menú izquierdo → **Project Settings → API**. Copia dos cosas:
 
-| Variable | Where it is in Supabase |
+| Variable | Dónde está en Supabase |
 |---|---|
 | `SUPABASE_URL` | Project Settings → API → Project URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | Project Settings → API → `service_role` key (**secret**, never put it in a browser or a message) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Project Settings → API → clave `service_role` (**secreta**, nunca la pongas en un navegador ni en un mensaje) |
 
-6. Put both in Vercel, redeploy.
+6. Pon las dos en Vercel y vuelve a desplegar.
 
-The panel stops saying "datos de ejemplo" and goes empty. That is correct: it is
-now showing your real data, and you have none yet.
+El panel deja de decir "datos de ejemplo" y queda vacío. Eso está bien: ahora
+muestra tus datos reales, y todavía no tienes ninguno.
 
-**If you skip this:** nothing is ever saved.
+**Si te lo saltas:** no se guarda nada.
 
 ---
 
-## Step 3 — The AI provider
+## Paso 3 — El proveedor de IA
 
-**No provider is chosen yet, and the code does not care which one you pick.**
-Everything the model does goes through one small interface (`lib/ai/`) with
-three adapters. You switch providers with one environment variable and no code
-change.
-
-### Option A — Anthropic (Claude) — what we are using
+Estamos usando **Claude Haiku 4.5** de Anthropic.
 
 ```
 AI_PROVIDER=anthropic
@@ -246,333 +247,369 @@ ANTHROPIC_API_KEY=sk-ant-...
 ANTHROPIC_MODEL=claude-haiku-4-5
 ```
 
-Key from [console.anthropic.com](https://console.anthropic.com) → API Keys.
-Haiku 4.5 costs USD 1 per million input tokens and USD 5 per million output —
-roughly a US cent per parent conversation.
+**No hay ningún paso de entrenamiento ni de fine-tuning.** Lo que el bot sabe
+sale de `knowledge/business.md`; cómo se comporta sale de las reglas del prompt
+en `lib/agent/prompt.ts`. Cambiar un dato es editar un archivo de texto.
 
-There is no training step and no fine-tuning. What the bot knows comes from
-`knowledge/business.md`; how it behaves comes from the prompt rules in
-`lib/agent/prompt.ts`. You change a fact by editing a markdown file.
+Control de costo:
 
-### Option B — anything that speaks the OpenAI format
+```
+AI_COST_CEILING_USD=1.00     # si una conversación pasa de esto, te la paso a ti
+AI_PRICE_IN_PER_MTOK=1       # tarifas de Haiku 4.5, solo para estimar el gasto
+AI_PRICE_OUT_PER_MTOK=5
+```
 
-This covers OpenAI, Groq, Together, OpenRouter, Mistral, DeepSeek, Fireworks
-and most self-hosted servers.
+### Si algún día quieres cambiar de proveedor
+
+Todo el código habla con la IA a través de una sola interfaz. Cambiar de
+proveedor es cambiar variables de entorno, sin tocar código:
 
 ```
 AI_PROVIDER=openai-compatible
-AI_BASE_URL=https://api.openai.com/v1     # or the provider's URL
+AI_BASE_URL=https://api.openai.com/v1     # o la dirección del proveedor
 AI_API_KEY=...
-AI_MODEL=gpt-4o-mini                       # whatever model you picked
+AI_MODEL=...
 ```
 
-### Option C — decide later
+Esto cubre OpenAI, Groq, Together, OpenRouter, Mistral, DeepSeek y casi
+cualquier servidor propio.
 
-Leave `AI_PROVIDER=mock`. The bot replies with fixed demo sentences. Everything
-else works. Useful for testing the plumbing without paying anyone.
-
-### Cost control
-
-```
-AI_COST_CEILING_USD=1.00     # one conversation costs more than this -> it goes to you
-AI_PRICE_IN_PER_MTOK=3       # set these from your provider's pricing page
-AI_PRICE_OUT_PER_MTOK=15     # they are only used to estimate spend
-```
-
-The price defaults are deliberately high, so an unconfigured deployment
-over-estimates what it is spending and hands conversations to you early rather
-than running up a bill quietly.
-
-**If you skip this:** the bot answers with demo sentences, not real answers.
-
-**Tell me:** which provider you chose. I do not need the key.
+**Si te lo saltas:** el bot responde con frases fijas de demostración, no con
+respuestas reales.
 
 ---
 
-## Step 4 — WhatsApp (Meta)
+## Paso 4 — WhatsApp (Meta)
 
-This is the longest step. Do Step 0 first.
+Es el paso más largo. Haz el Paso 0 primero.
 
-### 4a. Create the app
+### 4a. Crear la app
 
 1. [developers.facebook.com](https://developers.facebook.com) → **My Apps** →
-   **Create App** → type **Business**.
-2. In the app, add the **WhatsApp** product.
-3. Connect your Business portfolio and your phone number.
+   **Create App** → tipo **Business**.
+2. Dentro de la app, agrega el producto **WhatsApp**.
+3. Conecta tu portafolio de negocio y tu número.
 
-### 4b. Collect four values
+### 4b. Juntar cuatro datos
 
-| Variable | Where |
+| Variable | Dónde |
 |---|---|
-| `WHATSAPP_PHONE_NUMBER_ID` | WhatsApp → API Setup → "Phone number ID" (a number, **not** your phone number) |
-| `WHATSAPP_BUSINESS_ACCOUNT_ID` | Same page, "WhatsApp Business Account ID" |
-| `META_ACCESS_TOKEN` | Business Settings → Users → **System Users** → create one with admin access → Generate token → select your app → permissions `whatsapp_business_messaging` and `whatsapp_business_management`. Choose **never expires**. A temporary token will work for a day and then break silently. |
+| `WHATSAPP_PHONE_NUMBER_ID` | WhatsApp → API Setup → "Phone number ID" (un número, **no** tu teléfono) |
+| `WHATSAPP_BUSINESS_ACCOUNT_ID` | La misma página, "WhatsApp Business Account ID" |
+| `META_ACCESS_TOKEN` | Business Settings → Users → **System Users** → crea uno con acceso admin → Generate token → elige tu app → permisos `whatsapp_business_messaging` y `whatsapp_business_management`. Elige **que nunca expire**. Un token temporal funciona un día y después se rompe sin avisar. |
 | `META_APP_SECRET` | App Settings → Basic → App Secret → Show |
 
-Plus one you invent yourself:
+Más uno que inventas tú:
 
-| Variable | Value |
+| Variable | Valor |
 |---|---|
-| `META_WEBHOOK_VERIFY_TOKEN` | Any random string. You type it into Meta in the next step, and Meta sends it back to prove it is really them. |
+| `META_WEBHOOK_VERIFY_TOKEN` | Cualquier texto aleatorio. Lo escribes en Meta en el siguiente paso, y Meta te lo devuelve para probar que es él. |
 
-Put all five in Vercel and redeploy.
+Pon los cinco en Vercel y vuelve a desplegar.
 
-### 4c. Point Meta at the webhook
+### 4c. Apuntar Meta al webhook
 
-1. In the app → WhatsApp → **Configuration** → Webhooks → Edit.
-2. Callback URL: `https://YOUR-VERCEL-URL/api/webhook`
-3. Verify token: the `META_WEBHOOK_VERIFY_TOKEN` you invented.
-4. Click **Verify and save**. It must go green. If it does not, the token does
-   not match or the redeploy did not happen.
-5. Subscribe to these fields:
-   - `messages` — required
-   - `message_echoes` **and/or** `smb_message_echoes` — subscribe to whichever
-     ones your account shows. This is how the bot knows you replied from your
-     phone. Without it the bot will talk over you.
-   - `account_update` — tells you if WhatsApp disconnects the number
+1. En la app → WhatsApp → **Configuration** → Webhooks → Edit.
+2. Callback URL: `https://TU-DIRECCION-DE-VERCEL/api/webhook`
+3. Verify token: el `META_WEBHOOK_VERIFY_TOKEN` que inventaste.
+4. Dale **Verify and save**. Tiene que ponerse en verde. Si no, el token no
+   coincide o no volviste a desplegar.
+5. Suscríbete a estos campos:
+   - `messages` — obligatorio
+   - `message_echoes` **y/o** `smb_message_echoes` — suscríbete a los que te
+     aparezcan. Así es como el bot se entera de que respondiste desde tu
+     teléfono. Sin esto, el bot te va a hablar encima.
+   - `account_update` — te avisa si WhatsApp desconecta el número
 
-### 4d. Check the Graph API version
+### 4d. Revisar la versión del Graph API
 
-`META_GRAPH_VERSION` defaults to `v23.0`. Check
-[Meta's changelog](https://developers.facebook.com/docs/graph-api/changelog)
-for the current version and set it. Do not trust the number written here — it
-ages.
+`META_GRAPH_VERSION` está en `v23.0` por defecto. Revisa el
+[changelog de Meta](https://developers.facebook.com/docs/graph-api/changelog)
+y pon la versión actual. No confíes en el número escrito acá: envejece.
 
-### 4e. Your own number, for alerts
-
-| Variable | Value |
-|---|---|
-| `OWNER_WHATSAPP_NUMBER` | Your personal number, international format, no `+` and no spaces. Example: `573001112233`. |
-
-One thing to know: Meta applies the same 24-hour rule to your own number. If
-you have not written to the business number in a day, these alerts get rejected.
-**The admin panel is the reliable place to see what needs you.** WhatsApp alerts
-are the convenient extra.
-
-**If you skip this step:** the bot cannot receive or send anything.
+**Si te saltas este paso:** el bot no puede recibir ni enviar nada.
 
 ---
 
-## Step 5 — Tell the bot about your business
+## Paso 5 — Cómo te avisamos (importante)
 
-**This is the one only you can do, and it decides whether the bot sounds like
-you or like a bot.**
+Cuando un papá necesita que respondas tú, tienes que enterarte **en el
+momento**, no cuando abras el panel.
 
-Open `knowledge/business.md`. Everything between `«these marks»` is a blank for
-you to fill in: plans, prices, class length, ages, schedule, your bio, refund
-policy, and your answer to each of the ten objections you actually hear.
+Hay tres canales y puedes usar los tres a la vez. **Configura al menos dos.**
 
-Write it the way you would say it to a parent. That file is injected into the
-prompt word for word.
+### 5a. WhatsApp
 
-**While any blank is left, the bot is not allowed to quote a price, a schedule
-or a policy.** It will greet parents, ask the child's age, and hand everything
-else to you. That is on purpose: without it the bot would read
-`«USD ___ al mes»` aloud to a parent as though it were a price.
+| Variable | Valor |
+|---|---|
+| `OWNER_WHATSAPP_NUMBER` | Tu número personal, formato internacional, sin `+` y sin espacios. Ejemplo: `573001112233`. |
 
-Two ways to do it:
-- Edit the file on GitHub directly and commit. Vercel redeploys automatically.
-- Or write it out and send it to me, and I will put it in.
+**Ojo con esto:** Meta aplica la misma regla de 24 horas a tu propio número. Si
+tú no le escribiste al número del negocio en el último día, WhatsApp rechaza el
+aviso. Por eso WhatsApp solo no alcanza.
 
-To change a price later: edit that file, commit, redeploy. You never touch code.
+### 5b. Correo
 
-**If you skip this:** the bot can start conversations but cannot close them.
+Usamos [resend.com](https://resend.com): cuenta gratis, no hace falta
+configurar un dominio para empezar.
+
+1. Crea la cuenta.
+2. **API Keys → Create API Key**. Cópiala.
+3. Pon tu correo en `NOTIFY_EMAIL_TO`.
+
+| Variable | Valor |
+|---|---|
+| `RESEND_API_KEY` | La clave de Resend |
+| `NOTIFY_EMAIL_TO` | Tu correo |
+| `NOTIFY_EMAIL_FROM` | Déjalo como está hasta que verifiques tu dominio en Resend |
+
+### 5c. Notificación al teléfono (lo más inmediato)
+
+`NOTIFY_WEBHOOK_URL` es una dirección cualquiera a la que mandamos el aviso.
+Sirve con Telegram, Slack, Discord, Zapier, Make, o cualquier servicio de
+notificaciones.
+
+La forma más rápida, gratis y sin cuenta:
+
+1. Instala la app **ntfy** en tu teléfono (Android o iPhone).
+2. Crea un tema con un nombre difícil de adivinar, por ejemplo
+   `let-junior-avisos-x7k2`.
+3. Pon `https://ntfy.sh/let-junior-avisos-x7k2` en `NOTIFY_WEBHOOK_URL`.
+
+Listo: cada escalamiento te llega como notificación al teléfono al instante,
+sin depender de WhatsApp.
+
+### 5d. Comprobar que funciona
+
+En el panel, **Conexiones → Avisos → "Mandarme un aviso de prueba"**. Te llega
+por todos los canales configurados. Hazlo antes de salir en vivo: es lo único
+que no se puede saber mirando una pantalla de configuración.
+
+También conviene poner `PUBLIC_URL` con la dirección de tu panel, para que cada
+aviso traiga el link directo al contacto.
+
+**Si te saltas este paso:** el bot va a pausar conversaciones esperando que
+respondas tú, y no te vas a enterar hasta que abras el panel.
 
 ---
 
-## Step 6 — Google Calendar (trial class booking)
+## Paso 6 — Google Calendar (agendar clases de prueba)
 
-1. [console.cloud.google.com](https://console.cloud.google.com) → new project.
-2. **APIs & Services → Library** → enable **Google Calendar API**.
-3. **Credentials → Create credentials → Service account**. Create it, then open
-   it → **Keys → Add key → JSON**. A file downloads.
-4. Open [calendar.google.com](https://calendar.google.com) → your calendar →
-   Settings → **Share with specific people** → add the service account's email
-   (it looks like `something@project.iam.gserviceaccount.com`) with permission
-   **"Make changes to events"**. Without this the service account can see
-   nothing.
-5. Encode the JSON file into one line:
+1. [console.cloud.google.com](https://console.cloud.google.com) → nuevo
+   proyecto.
+2. **APIs & Services → Library** → activa **Google Calendar API**.
+3. **Credentials → Create credentials → Service account**. Créala, ábrela →
+   **Keys → Add key → JSON**. Se descarga un archivo.
+4. Abre [calendar.google.com](https://calendar.google.com) → tu calendario →
+   Configuración → **Compartir con personas específicas** → agrega el correo de
+   la cuenta de servicio (se ve como
+   `algo@proyecto.iam.gserviceaccount.com`) con permiso de **"Hacer cambios en
+   los eventos"**. Sin esto la cuenta de servicio no ve nada.
+5. Convierte el archivo JSON a una sola línea:
    ```bash
-   base64 -w0 your-service-account.json     # Linux
-   base64 -i your-service-account.json      # Mac
+   base64 -w0 tu-service-account.json     # Linux
+   base64 -i tu-service-account.json      # Mac
    ```
 
-| Variable | Value |
+| Variable | Valor |
 |---|---|
-| `GOOGLE_SERVICE_ACCOUNT_JSON` | The base64 output from above |
-| `GOOGLE_CALENDAR_ID` | Calendar settings → "Integrate calendar" → Calendar ID. Usually your email. |
-| `BOOKING_TIMEZONE` | e.g. `America/Bogota` |
-| `BOOKING_HOURS_START` | First hour you teach, 24h clock. e.g. `14` |
-| `BOOKING_HOURS_END` | Last hour, e.g. `20` |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | El resultado del base64 |
+| `GOOGLE_CALENDAR_ID` | Configuración del calendario → "Integrar calendario" → ID del calendario. Normalmente tu correo. |
+| `BOOKING_TIMEZONE` | Por ejemplo `America/Bogota` |
+| `BOOKING_HOURS_START` | Primera hora a la que das clase, reloj de 24h. Ejemplo: `14` |
+| `BOOKING_HOURS_END` | Última hora. Ejemplo: `20` |
 
-The bot never offers a slot less than 12 hours away, and re-checks the calendar
-immediately before booking, because two parents can accept the same slot
-seconds apart.
+El bot nunca ofrece un horario a menos de 12 horas de distancia, y vuelve a
+revisar el calendario justo antes de agendar, porque dos papás pueden aceptar
+el mismo horario con segundos de diferencia.
 
-**If you skip this:** the bot cannot offer times. It hands those parents to you.
+**Si te lo saltas:** el bot no puede proponer horarios. Esos papás te los pasa
+a ti.
 
 ---
 
-## Step 7 — Stripe (payment links)
+## Paso 7 — Stripe (links de pago)
 
 1. [dashboard.stripe.com](https://dashboard.stripe.com) → **Developers → API
-   keys** → Secret key. Use a **test** key first.
-2. **Products** → create one product per plan → inside it, copy the **price ID**
-   (starts with `price_`).
-3. Open `config/plans.json` and paste each price ID next to its plan. Commit.
+   keys** → Secret key. Usa primero una clave de **prueba** (`sk_test_`).
+2. **Products** → crea un producto por plan:
+   - **Plan Inicial** — USD 15, marca el precio como **One time**.
+   - **Plan Completo** — USD 50, marca el precio como **Recurring / Monthly**.
+3. Copia el ID de cada precio (empieza con `price_`) y pégalo en
+   `config/plans.json`. Haz commit.
 
-| Variable | Value |
+| Variable | Valor |
 |---|---|
-| `STRIPE_SECRET_KEY` | `sk_test_...` at first, `sk_live_...` when you are ready |
+| `STRIPE_SECRET_KEY` | `sk_test_...` al principio, `sk_live_...` cuando estés listo |
 
-The bot can only send a link for a plan that exists in that file. It is
-incapable of inventing a price: if it tries an unknown plan, the tool returns an
-error and the conversation goes to you.
+El bot solo puede mandar el link de un plan que exista en ese archivo. Es
+incapaz de inventar un precio: si intenta un plan que no existe, la herramienta
+devuelve error y la conversación te llega a ti.
 
-**If you skip this:** the bot cannot send payment links. It hands those parents
-to you.
+El descuento por hermanos (el segundo paga la mitad) no está en Stripe: ese
+cobro lo haces tú, porque son dos estudiantes en un mismo pago.
+
+**Si te lo saltas:** el bot no puede mandar links de pago. Esos papás te los
+pasa a ti.
 
 ---
 
-## Step 8 — Going live
+## Paso 8 — Salir en vivo
 
-Until now `ENVIRONMENT=development` means **nothing is ever sent to a real
-phone**; every message is written to the log instead. Test everything in that
-mode first.
+Hasta acá `ENVIRONMENT=development` significa que **nunca se manda nada a un
+teléfono real**; cada mensaje se escribe en el registro. Prueba todo así
+primero.
 
-Test with a Meta test number, never with your production number, until you have
-seen a full conversation work end to end.
+Prueba con un número de prueba de Meta, nunca con tu número de producción,
+hasta que hayas visto una conversación completa funcionar de principio a fin.
 
-When you are ready:
+Cuando estés listo:
 
 ```
 ENVIRONMENT=production
 BOT_ENABLED=true
-CRON_SECRET=<any long random string>
+CRON_SECRET=<cualquier texto largo y aleatorio>
 ```
 
-Redeploy. The bot is now live.
+Vuelve a desplegar. El bot está en vivo.
 
-**The kill switch:** the toggle at the top right of the panel stops the bot
-immediately, with no redeploy. Messages keep being recorded; nothing is sent.
-That is the first thing to reach for if something goes wrong. `BOT_ENABLED=false`
-in Vercel is the stronger version: it forces the bot off and the panel cannot
-override it.
-
----
-
-# What I need from you next
-
-Ordered by what unblocks the most work:
-
-0. **Try it first.** Run the testing section above and tell me what sounds
-   wrong. That costs you a coffee's worth of API credit and tells us more than
-   any amount of planning.
-1. **The answer to Step 0.** Can your number be onboarded to coexistence, or is
-   it locked to another provider? Nothing else matters until this is known.
-2. **`knowledge/business.md`, filled in.** Prices, plans, schedule, policies,
-   your ten objections, in your words, in Spanish. Send it as text and I will
-   put it in, or edit it on GitHub yourself.
-3. **Which AI provider you picked.** Not the key, just the name.
-4. **Your Vercel URL,** once Step 1 is done.
-5. **Your plan structure**: how many plans, what each includes, what each costs.
-   I need this for `config/plans.json`.
-6. **Anything that failed.** A screenshot of the panel's Conexiones page tells
-   me almost everything.
-
-Secrets go in Vercel, never in a message to me.
+**El interruptor de emergencia:** el switch de arriba a la derecha del panel
+apaga el bot al instante, sin redesplegar. Los mensajes se siguen guardando; no
+se envía nada. Es lo primero que tienes que tocar si algo sale mal.
+`BOT_ENABLED=false` en Vercel es la versión fuerte: fuerza el apagado y el
+panel no lo puede encender.
 
 ---
 
-# How it works, briefly
+# Qué necesito de ti
 
-A parent writes → Meta calls `/api/webhook` → we check the signature, save the
-message, and **answer Meta within a second**, because Meta retries anything
-slower and a retry would mean the parent gets the same reply twice.
+En orden de lo que más desbloquea:
 
-Then, in the background: if this is their first message from an ad, the click id
-is saved (it appears once and never again — it is what lets Meta tell you which
-ad produced a paying student). The conversation so far is sent to the AI
-provider along with your business file. The reply goes into a queue with a
-delay of 8 to 45 seconds, because an instant perfect answer is the clearest
-sign a parent is talking to software.
+0. **Pruébalo primero.** Corre la sección de arriba y dime qué suena mal. Te
+   cuesta lo que un café en créditos de API y nos dice más que cualquier
+   cantidad de planificación.
+1. **La respuesta del Paso 0.** ¿Tu número se puede pasar a coexistencia, o
+   está bloqueado con otro proveedor? Nada más importa hasta saber eso.
+2. **Tres datos que faltan** en `knowledge/business.md` (búscalos con Ctrl+F,
+   están entre «comillas angulares»):
+   - Con cuántas horas de anticipación hay que avisar para reponer una clase
+     del Plan Completo.
+   - Qué día se hacen las reposiciones.
+   - Cuántos días de garantía tiene el Plan Completo.
+3. **La dirección de Vercel,** cuando hagas el Paso 1.
+4. **Cualquier cosa que falle.** Una captura de la página Conexiones del panel
+   me dice casi todo.
 
-Before each queued message is actually sent, the system re-checks: did Jordi
-reply from his phone in the meantime? Did the 24-hour window close? Is the kill
-switch off? Has this parent already had 10 bot messages today? Any of those and
-the message is dropped rather than sent.
-
-**When you reply from your phone, the bot goes silent for that parent.** Meta
-echoes your message to us and that is the signal. There is no command to
-remember. Reactivate from the panel when you want the bot to take over again.
-
-Some things never reach the model at all. A parent asking for a discount, a
-refund, or mentioning a child's learning difficulty goes straight to you — that
-is a keyword check in code, not a suggestion in the prompt, because those are
-the conversations where being wrong costs a customer or hurts a child.
+Los secretos van en Vercel, nunca en un mensaje.
 
 ---
 
-# Day to day
+# Cómo funciona, en corto
 
-- **The panel is the dashboard.** Contacts in red ("Te toca a ti") need you.
-- **Answer from your phone as normal.** The bot steps aside automatically.
-- **Changing a price:** edit `knowledge/business.md`, commit, redeploy.
-- **Something feels wrong:** flip the switch off. Diagnose afterwards.
-- **Every 13 days:** open the WhatsApp Business app on your phone, or the
-  coexistence connection goes inactive.
+Un papá escribe → Meta llama a `/api/webhook` → verificamos la firma, guardamos
+el mensaje, y **le contestamos a Meta en menos de un segundo**, porque Meta
+reintenta cualquier cosa más lenta y un reintento significa que el papá recibe
+la misma respuesta dos veces.
+
+Después, por detrás: si es su primer mensaje desde un anuncio, se guarda el
+identificador del clic (aparece una sola vez y nunca más: es lo que le permite
+a Meta decirte qué anuncio produjo un estudiante que paga). La conversación
+hasta ese momento se manda al proveedor de IA junto con tu archivo de
+información. La respuesta entra a una cola con una espera de entre 8 y 45
+segundos, porque una respuesta instantánea y perfecta es la señal más clara de
+que un papá está hablando con software.
+
+Antes de mandar cada mensaje en cola, el sistema vuelve a revisar: ¿respondió
+Jordi desde su teléfono mientras tanto? ¿se cerró la ventana de 24 horas? ¿está
+apagado el interruptor? ¿este papá ya recibió 10 mensajes del bot hoy? Si algo
+de eso pasa, el mensaje se descarta en vez de enviarse.
+
+**Cuando respondes desde tu teléfono, el bot se calla para ese papá.** Meta nos
+reenvía tu mensaje y esa es la señal. No hay ningún comando que recordar. Lo
+reactivas desde el panel cuando quieras que el bot retome.
+
+Algunas cosas nunca llegan al modelo. Un papá que negocia el precio, que pide
+un reembolso, o que menciona una dificultad de aprendizaje del niño te llega
+directo a ti — eso es una revisión de palabras clave en el código, no una
+sugerencia en el prompt, porque son justo las conversaciones donde equivocarse
+cuesta un cliente o lastima a un niño.
+
+El descuento por hermanos es la excepción: como está escrito en tu archivo de
+información, el bot sí lo responde. Cualquier petición más allá de eso te llega
+a ti.
 
 ---
 
-# When something breaks
+# Día a día
 
-| What you see | What it means |
+- **El panel es tu tablero.** Los contactos en rojo ("Te toca a ti") te
+  necesitan.
+- **Responde desde tu teléfono como siempre.** El bot se hace a un lado solo.
+- **Cambiar un precio:** edita `knowledge/business.md`, haz commit, vuelve a
+  desplegar.
+- **Algo se siente raro:** apaga el switch. Diagnostica después.
+- **Cada 13 días:** abre la app de WhatsApp Business en tu teléfono, o la
+  conexión de coexistencia se desactiva.
+
+---
+
+# Cuando algo se rompe
+
+| Qué ves | Qué significa |
 |---|---|
-| Panel says "datos de ejemplo" | Supabase is not connected. Step 2. |
-| Meta webhook won't verify | `META_WEBHOOK_VERIFY_TOKEN` doesn't match, or you didn't redeploy after setting it. |
-| Messages arrive but nothing is answered | Bot switched off, or no AI provider, or the lead is paused. The panel says which. |
-| The bot replies *over* you | You are not subscribed to the echo fields. Step 4c. |
-| "Pasaron más de 24 horas" | WhatsApp only allows free messages within 24h of the parent's last message. You have to write first. |
-| A contact suddenly paused itself | Either you replied from your phone, or it hit the 10-messages-per-day cap, or it escalated. The panel says which in plain words. |
-| Bot went completely silent | Check for an `ACCOUNT_OFFBOARDED` alert — changing phones or reinstalling the WhatsApp Business app disconnects the API. |
+| El panel dice "datos de ejemplo" | Supabase no está conectado. Paso 2. |
+| El webhook de Meta no verifica | `META_WEBHOOK_VERIFY_TOKEN` no coincide, o no volviste a desplegar después de ponerlo. |
+| Llegan mensajes pero nadie responde | El bot está apagado, o no hay proveedor de IA, o el contacto está en pausa. El panel dice cuál. |
+| El bot responde *encima* de ti | No estás suscrito a los campos de echo. Paso 4c. |
+| "Pasaron más de 24 horas" | WhatsApp solo permite mensajes libres dentro de las 24 horas siguientes al mensaje del papá. Tienes que escribir tú primero. |
+| Un contacto se pausó solo | O respondiste desde tu teléfono, o llegó al tope de 10 mensajes por día, o escaló. El panel lo dice en palabras. |
+| El bot se quedó mudo del todo | Busca un aviso de `ACCOUNT_OFFBOARDED` — cambiar de teléfono o reinstalar la app de WhatsApp Business desconecta la API. |
+| No te llegan los avisos | Panel → Conexiones → Avisos → "Mandarme un aviso de prueba". Te dice por cuál canal salió y cuál falló. |
 
 ---
 
-# For a developer
+# Para un desarrollador
 
 ```bash
 npm install
-npm test          # 118 tests, no network, no accounts needed
+npm test          # 128 pruebas, sin red y sin cuentas
 npm run typecheck
-npm run dev:local # panel + API at localhost:3000, no Vercel needed
+npm run dev:local # panel + API en localhost:3000, sin Vercel
 ```
 
-Layout:
+Estructura:
 
 ```
-api/          HTTP entry points (webhook, cron, admin)
-lib/ai/       provider interface + anthropic, openai-compatible, mock adapters
-lib/agent/    prompt, history, pacing, tools, escalation
-lib/store/    Store interface + supabase and in-memory drivers
-lib/meta/     webhook payload types, signature verification
-public/       the admin panel
-knowledge/    business.md — the only file Jordi edits
+api/          puntos de entrada HTTP (webhook, cron, admin)
+lib/ai/       interfaz de proveedor + adaptadores anthropic, openai-compatible, mock
+lib/agent/    prompt, historial, ritmo, herramientas, escalamiento
+lib/store/    interfaz Store + drivers supabase y en memoria
+lib/meta/     tipos del webhook, verificación de firma
+lib/notify.ts avisos a Jordi por WhatsApp, correo y webhook
+public/       el panel
+knowledge/    business.md — el único archivo que edita Jordi
 config/       plans.json
 db/schema.sql
-fixtures/     one payload per webhook event type
+fixtures/     un payload por cada tipo de evento del webhook
 tests/
 ```
 
-Two deliberate deviations from `SPEC.md`, both documented where they are made:
+Dos desviaciones deliberadas de `SPEC.md`, ambas documentadas donde ocurren:
 
-- **A fifth table, `app_settings`**, so the panel's kill switch works without a
-  redeploy. The spec puts the kill switch in an env var only; a non-technical
-  operator cannot wait for a build during an incident. The env var still wins.
-- **The webhook drains its own queue** instead of relying only on the cron
-  route, because Vercel's free plan runs cron jobs once a day, which would leave
-  every reply stuck for hours. The cron remains the safety net.
+- **Una quinta tabla, `app_settings`**, para que el interruptor del panel
+  funcione sin redesplegar. La spec pone el interruptor solo en una variable de
+  entorno; un operador no técnico no puede esperar un build durante una
+  emergencia. La variable de entorno sigue mandando.
+- **El webhook drena su propia cola** en vez de depender solo del cron, porque
+  el plan gratis de Vercel corre los cron una vez al día, lo que dejaría cada
+  respuesta atascada horas. El cron queda como red de seguridad.
 
-Still to build: **M6**, sending conversion events to Meta's Conversions API.
-The events are already recorded in `conversion_events` with their click ids and
-are waiting to be drained. Leads with no click id are skipped by design —
-sending them unattributed pollutes the dataset.
+Y una desviación de criterio, que conviene revisar: la spec dice escalar
+*cualquier* petición de descuento. El archivo de información documenta el
+descuento por hermanos de forma explícita, así que el bot responde esa y escala
+todo lo demás. Está en `lib/agent/prompt.ts` y se revierte en una línea.
+
+Falta construir **M6**: mandar los eventos de conversión a la Conversions API
+de Meta. Los eventos ya se guardan en `conversion_events` con su identificador
+de clic, esperando a ser enviados. Los contactos sin identificador de clic se
+omiten a propósito: mandarlos sin atribución ensucia el dataset.
