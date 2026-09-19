@@ -1,0 +1,35 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "WABA_ID_PLACEHOLDER",
+      "changes": [
+        {
+          "field": "messages",
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "15550001111",
+              "phone_number_id": "PHONE_NUMBER_ID_PLACEHOLDER"
+            },
+            "contacts": [
+              {
+                "profile": { "name": "Marcela R." },
+                "wa_id": "573001112233"
+              }
+            ],
+            "messages": [
+              {
+                "from": "573001112233",
+                "id": "wamid.TEST.text.0001",
+                "timestamp": "1758240000",
+                "text": { "body": "hola, quisiera informacion de las clases" },
+                "type": "text"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

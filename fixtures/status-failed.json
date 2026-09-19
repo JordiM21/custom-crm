@@ -1,0 +1,35 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "WABA_ID_PLACEHOLDER",
+      "changes": [
+        {
+          "field": "messages",
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "15550001111",
+              "phone_number_id": "PHONE_NUMBER_ID_PLACEHOLDER"
+            },
+            "statuses": [
+              {
+                "id": "wamid.TEST.out.0001",
+                "status": "failed",
+                "timestamp": "1758240300",
+                "recipient_id": "573001112233",
+                "errors": [
+                  {
+                    "code": 131047,
+                    "title": "Re-engagement message",
+                    "message": "More than 24 hours have passed since the recipient last replied."
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "WABA_ID_PLACEHOLDER",
+      "changes": [
+        {
+          "field": "messages",
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "15550001111",
+              "phone_number_id": "PHONE_NUMBER_ID_PLACEHOLDER"
+            },
+            "contacts": [
+              {
+                "profile": { "name": "Carlos M." },
+                "wa_id": "51987654321"
+              }
+            ],
+            "messages": [
+              {
+                "from": "51987654321",
+                "id": "wamid.TEST.ctwa.0001",
+                "timestamp": "1758240100",
+                "type": "text",
+                "text": { "body": "hola, vi el anuncio" },
+                "referral": {
+                  "source_url": "https://fb.me/EXAMPLE",
+                  "source_id": "120209876543212",
+                  "source_type": "ad",
+                  "headline": "Aprende ingles jugando — clases en vivo para ninos",
+                  "body": "Primera clase de prueba gratis",
+                  "ctwa_clid": "CTWA_CLID_TEST_ABC123"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

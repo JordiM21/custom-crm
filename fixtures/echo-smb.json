@@ -1,0 +1,30 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "WABA_ID_PLACEHOLDER",
+      "changes": [
+        {
+          "field": "smb_message_echoes",
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "15550001111",
+              "phone_number_id": "PHONE_NUMBER_ID_PLACEHOLDER"
+            },
+            "message_echoes": [
+              {
+                "from": "15550001111",
+                "to": "573001112233",
+                "id": "wamid.TEST.echo.0001",
+                "timestamp": "1758240200",
+                "type": "text",
+                "text": { "body": "Hola Marcela, soy Jordi. Te escribo yo directamente." }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

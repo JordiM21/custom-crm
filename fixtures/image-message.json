@@ -1,0 +1,39 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "WABA_ID_PLACEHOLDER",
+      "changes": [
+        {
+          "field": "messages",
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "15550001111",
+              "phone_number_id": "PHONE_NUMBER_ID_PLACEHOLDER"
+            },
+            "contacts": [
+              {
+                "profile": { "name": "Paula G." },
+                "wa_id": "5491134567890"
+              }
+            ],
+            "messages": [
+              {
+                "from": "5491134567890",
+                "id": "wamid.TEST.image.0001",
+                "timestamp": "1758240400",
+                "type": "image",
+                "image": {
+                  "mime_type": "image/jpeg",
+                  "sha256": "PLACEHOLDER",
+                  "id": "MEDIA_ID_PLACEHOLDER"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
