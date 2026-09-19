@@ -39,6 +39,12 @@ export const config = {
   /** Env-level kill switch. When false it overrides the panel toggle. */
   botEnabledEnv: bool('BOT_ENABLED', true),
 
+  /**
+   * Human-like send delays. Off only in tests, where waiting 45 seconds to
+   * observe a queued message proves nothing that the pacing unit tests do not.
+   */
+  pacingEnabled: bool('PACING_ENABLED', true),
+
   ai: {
     provider: str('AI_PROVIDER', 'mock') as 'mock' | 'anthropic' | 'openai-compatible',
     anthropicKey: str('ANTHROPIC_API_KEY'),

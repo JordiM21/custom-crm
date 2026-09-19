@@ -1,7 +1,13 @@
+import { runAgent } from '../agent/run.js';
+import { config } from '../config.js';
+import { escalateToHuman } from '../agent/escalate.js';
 import { log } from '../logger.js';
+import { drainAfterDelay } from '../queue.js';
 import { getStore } from '../store/index.js';
 import type { Lead } from '../store/types.js';
+import { sendText } from '../whatsapp.js';
 import {
+  MEDIA_TYPES,
   messageText,
   readEchoes,
   timestampToIso,
@@ -202,7 +208,43 @@ async function handleInbound(
     type: msg.type,
     chars: body?.length ?? 0,
   });
+
+  // SPEC §4.1 — no transcription and no vision in v1. A photo or voice note
+  // goes to Jordi rather than being guessed at.
+  if (MEDIA_TYPES.has(msg.type)) {
+    const fresh = (await store.getLeadById(lead.id)) ?? lead;
+
+    // Sent directly, not queued: escalation pauses the lead, and the drain
+    // correctly refuses to send queued messages for a paused lead.
+    await sendText(
+      waId,
+      'me llegó tu mensaje. Jordi lo revisa y te responde personalmente en un ratito',
+      { lastInboundAt: receivedAt },
+    );
+
+    await escalateToHuman(
+      fresh,
+      'unsupported_media',
+      `El padre/madre envió un ${msg.type}. El asistente no procesa audio ni imágenes en esta versión.`,
+      { ack: false },
+    );
+    return;
+  }
+
+  if (!body) {
+    log.warn('webhook.message_without_text', { lead_id: lead.id, type: msg.type });
+    return;
+  }
+
+  const run = await runAgent(lead.id, { text: body, waMessageId: msg.id });
+
+  if (run.queued > 0 && config.pacingEnabled) {
+    // Send inside this invocation rather than waiting for the cron — see
+    // drainAfterDelay for why.
+    await drainAfterDelay();
+  }
 }
+
 
 /**
  * SPEC §4.3 — coexistence. Jordi typed to this parent from the WhatsApp

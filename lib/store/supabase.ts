@@ -220,6 +220,20 @@ export class SupabaseStore implements Store {
     return count ?? 0;
   }
 
+  async nextPendingSendAfter(): Promise<string | null> {
+    const { data, error } = await this.db
+      .from('outbound_queue')
+      .select('send_after')
+      .is('sent_at', null)
+      .is('cancelled_at', null)
+      .lt('attempts', 3)
+      .order('send_after', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (error) this.fail('nextPendingSendAfter', error);
+    return (data as { send_after: string } | null)?.send_after ?? null;
+  }
+
   async insertConversionEvent(
     ev: Omit<ConversionEvent, 'id' | 'created_at' | 'sent_to_meta' | 'meta_response' | 'attempts'>,
   ): Promise<ConversionEvent> {

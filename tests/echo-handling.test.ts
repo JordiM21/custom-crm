@@ -48,6 +48,10 @@ test('queued bot messages are cancelled when Jordi replies', async () => {
   await processPayload(fixture('text-message'));
   const lead = store.leads[0]!;
 
+  // The agent queues its own reply to that message; clear it so this test is
+  // only about what the echo cancels.
+  store.queue = [];
+
   await store.enqueue({
     lead_id: lead.id,
     body: 'mensaje que ya no se debe enviar',
@@ -69,6 +73,8 @@ test('queued bot messages are cancelled when Jordi replies', async () => {
 test('a message already sent is not retroactively cancelled', async () => {
   await processPayload(fixture('text-message'));
   const lead = store.leads[0]!;
+
+  store.queue = [];
 
   const sent = await store.enqueue({
     lead_id: lead.id,
@@ -107,6 +113,8 @@ test('a replayed echo does not pause twice or duplicate the message', async () =
 test('another parent’s queue is untouched when Jordi replies to one lead', async () => {
   await processPayload(fixture('text-message'));
   await processPayload(fixture('ctwa-referral'));
+
+  store.queue = [];
 
   const other = store.leads.find((l) => l.wa_id === '51987654321')!;
   await store.enqueue({

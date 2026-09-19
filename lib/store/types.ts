@@ -143,6 +143,8 @@ export interface Store {
   markQueueFailed(id: string, error: string): Promise<void>;
   cancelQueueForLead(leadId: string, reason: string): Promise<number>;
   pendingQueueCount(): Promise<number>;
+  /** When the next unsent message is due, so a drain can sleep exactly that long. */
+  nextPendingSendAfter(): Promise<string | null>;
 
   insertConversionEvent(
     ev: Omit<ConversionEvent, 'id' | 'created_at' | 'sent_to_meta' | 'meta_response' | 'attempts'>,

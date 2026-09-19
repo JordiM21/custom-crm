@@ -194,6 +194,14 @@ export class MemoryStore implements Store {
     return this.queue.filter((q) => !q.sent_at && !q.cancelled_at).length;
   }
 
+  async nextPendingSendAfter(): Promise<string | null> {
+    const pending = this.queue
+      .filter((q) => !q.sent_at && !q.cancelled_at && q.attempts < 3)
+      .map((q) => q.send_after)
+      .sort();
+    return pending[0] ?? null;
+  }
+
   async insertConversionEvent(
     ev: Omit<ConversionEvent, 'id' | 'created_at' | 'sent_to_meta' | 'meta_response' | 'attempts'>,
   ): Promise<ConversionEvent> {
