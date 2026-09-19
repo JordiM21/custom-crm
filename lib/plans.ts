@@ -40,7 +40,7 @@ export function loadPlans(): Plan[] {
   }
 
   log.error('plans.missing', {
-    human: 'The plans file could not be read. The assistant cannot send payment links.',
+    human: 'No se pudo leer el archivo de planes. El asistente no puede mandar links de pago.',
   });
   cache = [];
   return cache;

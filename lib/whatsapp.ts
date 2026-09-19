@@ -114,7 +114,7 @@ export async function sendText(
         to,
         hoursSinceInbound: hours === null ? null : Math.round(hours),
         human:
-          'Could not reply: WhatsApp only allows free messages within 24 hours of the parent writing. This parent needs a template message or a reply from Jordi.',
+          'No se pudo responder: WhatsApp solo permite mensajes libres dentro de las 24 horas siguientes al mensaje del contacto. Este contacto necesita una plantilla aprobada o que le escribas tú.',
       });
       return { ok: false, skipped: 'window_closed', error: '24h window closed' };
     }
@@ -125,7 +125,7 @@ export async function sendText(
       to,
       body,
       reason: config.environment !== 'production' ? 'development_environment' : 'missing_credentials',
-      human: `Dry run — would have sent to ${to}: "${body}"`,
+      human: `Modo de pruebas: se habría enviado a ${to}: "${body}"`,
     });
     return {
       ok: true,
@@ -228,7 +228,7 @@ export async function alertOwner(text: string): Promise<SendResult> {
   if (!config.ops.ownerWhatsapp) {
     log.warn('alert.no_owner_number', {
       text,
-      human: 'Wanted to alert Jordi but OWNER_WHATSAPP_NUMBER is not set.',
+      human: 'Se quiso enviar una alerta pero OWNER_WHATSAPP_NUMBER no está configurado.',
     });
     return { ok: false, error: 'owner number not configured' };
   }

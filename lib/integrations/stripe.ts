@@ -47,7 +47,7 @@ export async function createPaymentLink(plan: Plan, leadWaId: string): Promise<P
     log.error('stripe.payment_link_failed', {
       plan: plan.id,
       message,
-      human: 'Could not create a payment link. The lead was handed to Jordi instead.',
+      human: 'No se pudo crear el link de pago. El contacto pasó a ti.',
     });
     throw new Error(`stripe: ${message}`);
   }

@@ -11,7 +11,7 @@
     "build": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "test": "PACING_ENABLED=false node --import tsx --test tests/*.test.ts",
-    "seed": "tsx scripts/seed.ts"
+    "dev:local": "tsx scripts/dev-server.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",

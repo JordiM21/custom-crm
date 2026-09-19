@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>LET Junior — Panel</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='24' fill='%2334c759'/><text y='71' x='50' text-anchor='middle' font-size='56' font-family='-apple-system,sans-serif' font-weight='700' fill='white'>L</text></svg>"
+    />
+  </head>
+  <body>
+    <!-- Login ------------------------------------------------------------- -->
+    <div class="login hidden" id="login">
+      <form class="login-card" id="login-form">
+        <div class="login-mark">L</div>
+        <h1>LET Junior</h1>
+        <p>Panel de administración</p>
+        <input
+          class="control"
+          type="password"
+          id="password"
+          placeholder="Contraseña"
+          autocomplete="current-password"
+          required
+        />
+        <button class="btn primary full" type="submit" style="margin-top: 12px">Entrar</button>
+        <p id="login-error" class="hidden" style="color: var(--red); margin: 12px 0 0"></p>
+      </form>
+    </div>
+
+    <!-- App --------------------------------------------------------------- -->
+    <div class="shell hidden" id="app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark">L</div>
+          <span>LET Junior</span>
+        </div>
+
+        <div class="topbar-spacer"></div>
+
+        <nav class="tabs" role="tablist">
+          <button class="tab" role="tab" data-page="dashboard" aria-selected="true">Resumen</button>
+          <button class="tab" role="tab" data-page="leads" aria-selected="false">Contactos</button>
+          <button class="tab" role="tab" data-page="setup" aria-selected="false">Conexiones</button>
+        </nav>
+
+        <button class="switch" id="bot-switch" data-on="true" title="Encender o apagar el bot">
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+          <span class="switch-label" id="bot-label">Bot activo</span>
+        </button>
+      </header>
+
+      <main>
+        <!-- Dashboard -->
+        <div class="page" id="page-dashboard">
+          <div class="banners" id="banners"></div>
+
+          <section>
+            <h2>Resumen</h2>
+            <div class="tiles" id="tiles"></div>
+          </section>
+
+          <section>
+            <h3>Embudo</h3>
+            <div class="pipeline" id="pipeline"></div>
+          </section>
+
+          <section>
+            <h3>Actividad reciente</h3>
+            <div class="list" id="activity"></div>
+          </section>
+        </div>
+
+        <!-- Leads -->
+        <div class="page hidden" id="page-leads">
+          <h2>Contactos</h2>
+
+          <div class="toolbar">
+            <label class="search">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3.5-3.5" />
+              </svg>
+              <input type="search" id="search" placeholder="Buscar por nombre o número" />
+            </label>
+          </div>
+
+          <div class="chips" id="stage-chips"></div>
+
+          <div class="list" id="lead-list" style="margin-top: 14px"></div>
+        </div>
+
+        <!-- Setup -->
+        <div class="page hidden" id="page-setup">
+          <h2>Conexiones</h2>
+          <p style="color: var(--text-2); font-size: 14px; margin: -6px 0 18px">
+            Lo que falta para que el sistema funcione completo. Cada punto explica qué pasa si
+            lo dejas sin conectar.
+          </p>
+          <div class="banners" id="setup-banners"></div>
+          <div class="list" id="checklist"></div>
+
+          <section>
+            <h3>Planes</h3>
+            <div class="list" id="plans"></div>
+          </section>
+
+          <section>
+            <h3>Información del negocio</h3>
+            <div class="card" id="knowledge"></div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <!-- Lead detail sheet --------------------------------------------------- -->
+    <div class="scrim" id="scrim"></div>
+    <aside class="sheet" id="sheet" aria-hidden="true">
+      <div class="sheet-head">
+        <div class="sheet-title">
+          <h2 id="sheet-name">—</h2>
+          <p id="sheet-sub">—</p>
+        </div>
+        <button class="icon-btn" id="sheet-close" aria-label="Cerrar">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round">
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+      </div>
+      <div class="sheet-body" id="sheet-body"></div>
+    </aside>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

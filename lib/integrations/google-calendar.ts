@@ -33,7 +33,7 @@ function loadServiceAccount(): ServiceAccount | null {
     log.error('calendar.bad_service_account', {
       error: String(err),
       human:
-        'The Google service account key could not be read. Trial classes cannot be booked until it is fixed.',
+        'No se pudo leer la clave de la cuenta de servicio de Google. No se pueden agendar clases de prueba hasta arreglarlo.',
     });
     return null;
   }

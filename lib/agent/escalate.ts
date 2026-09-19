@@ -57,7 +57,7 @@ export async function escalateToHuman(
     summary,
     cancelled_messages: cancelled,
     alerted: alert.ok,
-    human: `${name} needs a personal reply from Jordi (${reason}).`,
+    human: `${name} necesita que le respondas tú (${reason}).`,
   });
 
   return {

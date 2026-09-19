@@ -16,8 +16,11 @@ let cache: { text: string; unfilled: string[] } | null = null;
  * real, so the agent is not allowed to answer factual questions from them.
  */
 function findPlaceholders(text: string): string[] {
-  const matches = text.match(/«[^»]{0,80}»/g) ?? [];
-  return [...new Set(matches)];
+  // The file's own instructions to Jordi are HTML comments and mention the
+  // placeholder syntax; scanning them would report a permanently unfilled file.
+  const withoutComments = text.replace(/<!--[\s\S]*?-->/g, '');
+  const matches = withoutComments.match(/«[^»]{0,80}»/g) ?? [];
+  return [...new Set(matches.map((m) => m.replace(/\s+/g, ' ')))];
 }
 
 function candidatePaths(): string[] {
@@ -40,7 +43,7 @@ export function loadKnowledge(): { text: string; unfilled: string[] } {
         log.warn('knowledge.placeholders_remaining', {
           count: unfilled.length,
           human:
-            'The business information file still has blanks to fill in. Until it is complete the assistant will hand those questions to Jordi instead of answering them.',
+            'La información del negocio todavía tiene datos sin llenar. Hasta completarla, el asistente pasa esas preguntas a ti en vez de responderlas.',
         });
       }
       cache = { text, unfilled };
@@ -52,7 +55,7 @@ export function loadKnowledge(): { text: string; unfilled: string[] } {
 
   log.error('knowledge.missing', {
     human:
-      'The business information file could not be read. The assistant knows nothing about the business and will hand every question to Jordi.',
+      'No se pudo leer el archivo de información del negocio. El asistente no sabe nada del negocio y va a pasarte todas las preguntas.',
   });
   cache = { text: '', unfilled: ['«archivo no encontrado»'] };
   return cache;

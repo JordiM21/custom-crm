@@ -42,7 +42,7 @@ export async function processPayload(payload: WebhookPayload): Promise<ProcessRe
         log.error('webhook.change_failed', {
           field: change.field,
           error: String(err),
-          human: 'A WhatsApp event could not be processed.',
+          human: 'No se pudo procesar un evento de WhatsApp.',
         });
       }
     }
@@ -87,7 +87,7 @@ async function processChange(
     log.warn('webhook.unhandled_field', {
       field,
       keys: Object.keys(value),
-      human: `WhatsApp sent an event type we do not handle yet (${field}).`,
+      human: `WhatsApp envió un tipo de evento que todavía no manejamos (${field}).`,
     });
   }
 }
@@ -138,7 +138,7 @@ async function captureReferral(lead: Lead, msg: WebhookMessage): Promise<Lead> {
       lead_id: lead.id,
       source_id: referral.source_id,
       headline: referral.headline,
-      human: 'A lead arrived from a Facebook or Instagram ad and was tagged for tracking.',
+      human: 'Llegó un contacto desde un anuncio de Facebook o Instagram y quedó marcado para seguimiento.',
     });
     return updated;
   } catch (err) {
@@ -151,7 +151,7 @@ async function captureReferral(lead: Lead, msg: WebhookMessage): Promise<Lead> {
       source_id: referral.source_id,
       error: String(err),
       human:
-        'Could not save the ad-click id for a new lead. Meta will not be able to attribute this sale.',
+        'No se pudo guardar el identificador del anuncio de un contacto nuevo. Meta no va a poder atribuir esta venta.',
     });
     return lead;
   }
@@ -264,7 +264,7 @@ async function handleEcho(echo: WebhookEcho, field: string, result: ProcessResul
     log.error('webhook.echo_without_recipient', {
       field,
       keys: Object.keys(echo),
-      human: 'Jordi replied from his phone but we could not tell which parent it went to.',
+      human: 'Respondiste desde tu teléfono pero no pudimos saber a qué contacto fue el mensaje.',
     });
     result.errors += 1;
     return;
@@ -304,7 +304,7 @@ async function handleEcho(echo: WebhookEcho, field: string, result: ProcessResul
     lead_id: lead.id,
     wa_id: waId,
     cancelled_messages: cancelled,
-    human: `Jordi replied to ${lead.display_name ?? lead.profile_name ?? waId} from his phone. The bot is now paused for this parent.`,
+    human: `Le respondiste a ${lead.display_name ?? lead.profile_name ?? waId} desde tu teléfono. El bot quedó en pausa para este contacto.`,
   });
 }
 
@@ -315,7 +315,7 @@ function handleStatuses(value: WebhookValue): void {
         wa_message_id: status.id,
         recipient: status.recipient_id,
         errors: status.errors,
-        human: 'A message could not be delivered to a parent.',
+        human: 'Un mensaje no se pudo entregar a un contacto.',
       });
     } else {
       log.debug('whatsapp.status', { wa_message_id: status.id, status: status.status });
@@ -329,7 +329,7 @@ function handleAccountUpdate(value: WebhookValue): void {
     log.error('whatsapp.account_offboarded', {
       event,
       human:
-        'WhatsApp disconnected this number from the Cloud API. The bot is offline until it is reconnected.',
+        'WhatsApp desconectó este número de la API. El bot está fuera de línea hasta que se vuelva a conectar.',
     });
   } else {
     log.info('whatsapp.account_update', { event });

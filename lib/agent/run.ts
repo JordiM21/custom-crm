@@ -53,7 +53,7 @@ export async function runAgent(
     log.warn('agent.skipped_kill_switch', {
       lead_id: lead.id,
       blockedBy: botState.blockedBy,
-      human: 'A message arrived while the bot was switched off. It was recorded but not answered.',
+      human: 'Llegó un mensaje con el bot apagado. Se guardó pero nadie respondió.',
     });
     return { status: 'skipped_kill_switch', queued: 0, detail: botState.blockedBy ?? undefined };
   }
@@ -92,7 +92,7 @@ export async function runAgent(
     log.error('agent.model_failed', {
       lead_id: lead.id,
       error: String(err),
-      human: 'The AI service failed to answer. The conversation was handed to Jordi.',
+      human: 'El servicio de IA no pudo responder. La conversación pasó a ti.',
     });
     await escalateToHuman(
       lead,

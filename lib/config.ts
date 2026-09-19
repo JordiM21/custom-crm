@@ -127,11 +127,11 @@ export function setupChecklist(): SetupCheck[] {
 
   checks.push({
     id: 'admin',
-    label: 'Admin password',
+    label: 'Contraseña del panel',
     status: config.admin.password ? 'ready' : 'missing',
     detail: config.admin.password
-      ? 'The panel is password protected.'
-      : 'Anyone with the link can open this panel. Set ADMIN_PASSWORD before you go live.',
+      ? 'El panel está protegido con contraseña.'
+      : 'Cualquiera con el link puede abrir este panel. Pon ADMIN_PASSWORD antes de salir en vivo.',
     vars: ['ADMIN_PASSWORD', 'SESSION_SECRET'],
     order: 1,
   });
@@ -139,11 +139,11 @@ export function setupChecklist(): SetupCheck[] {
   const dbReady = Boolean(config.supabase.url && config.supabase.serviceRoleKey);
   checks.push({
     id: 'database',
-    label: 'Database',
+    label: 'Base de datos',
     status: dbReady ? 'ready' : 'missing',
     detail: dbReady
-      ? 'Connected to Supabase. Leads and conversations are saved permanently.'
-      : 'Running on demo data. Everything you see is fake and disappears on the next deploy.',
+      ? 'Conectada a Supabase. Los contactos y las conversaciones se guardan de verdad.'
+      : 'Estás con datos de ejemplo. Todo lo que ves es inventado y se borra en el próximo despliegue.',
     vars: ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'],
     order: 2,
   });
@@ -161,8 +161,10 @@ export function setupChecklist(): SetupCheck[] {
     status: metaCount === metaVars.length ? 'ready' : metaCount === 0 ? 'missing' : 'partial',
     detail:
       metaCount === metaVars.length
-        ? 'Connected to the WhatsApp Cloud API.'
-        : 'Not connected. The bot cannot receive or send WhatsApp messages yet.',
+        ? 'Conectado a la API de WhatsApp.'
+        : metaCount === 0
+          ? 'Sin conectar. El bot todavía no puede recibir ni enviar mensajes de WhatsApp.'
+          : `A medio conectar: faltan ${metaVars.length - metaCount} de ${metaVars.length} datos. El bot no va a funcionar hasta tenerlos todos.`,
     vars: [
       'WHATSAPP_PHONE_NUMBER_ID',
       'META_ACCESS_TOKEN',
@@ -180,22 +182,22 @@ export function setupChecklist(): SetupCheck[] {
         : false;
   checks.push({
     id: 'ai',
-    label: 'AI provider',
+    label: 'Proveedor de IA',
     status: aiReady ? 'ready' : 'missing',
     detail: aiReady
-      ? `Replies are written by ${config.ai.provider}.`
-      : 'No AI account connected. The bot replies with fixed demo text, not real answers.',
+      ? `Las respuestas las escribe ${config.ai.provider}.`
+      : 'No hay una cuenta de IA conectada. El bot responde con frases fijas de demostración, no con respuestas reales.',
     vars: ['AI_PROVIDER', 'ANTHROPIC_API_KEY', 'AI_API_KEY', 'AI_MODEL'],
     order: 4,
   });
 
   checks.push({
     id: 'owner',
-    label: 'Your WhatsApp number',
+    label: 'Tu número de WhatsApp',
     status: config.ops.ownerWhatsapp ? 'ready' : 'missing',
     detail: config.ops.ownerWhatsapp
-      ? 'Escalations and alerts are sent to you on WhatsApp.'
-      : 'You will not be alerted when a parent needs you. Set OWNER_WHATSAPP_NUMBER.',
+      ? 'Las alertas y los contactos que necesitan atención te llegan por WhatsApp.'
+      : 'No te vamos a poder avisar cuando un padre necesite que respondas tú. Pon OWNER_WHATSAPP_NUMBER.',
     vars: ['OWNER_WHATSAPP_NUMBER'],
     order: 5,
   });
@@ -206,8 +208,8 @@ export function setupChecklist(): SetupCheck[] {
     label: 'Google Calendar',
     status: calReady ? 'ready' : 'missing',
     detail: calReady
-      ? 'The bot can read your availability and book trial classes.'
-      : 'The bot cannot offer times or book trial classes. It will hand those parents to you instead.',
+      ? 'El bot puede ver tu disponibilidad y agendar clases de prueba.'
+      : 'El bot no puede proponer horarios ni agendar clases de prueba. Esos contactos te los pasa a ti.',
     vars: ['GOOGLE_SERVICE_ACCOUNT_JSON', 'GOOGLE_CALENDAR_ID'],
     order: 6,
   });
@@ -217,19 +219,19 @@ export function setupChecklist(): SetupCheck[] {
     label: 'Stripe',
     status: config.stripe.secretKey ? 'ready' : 'missing',
     detail: config.stripe.secretKey
-      ? 'The bot can send payment links.'
-      : 'The bot cannot send payment links. It will hand those parents to you instead.',
+      ? 'El bot puede mandar links de pago.'
+      : 'El bot no puede mandar links de pago. Esos contactos te los pasa a ti.',
     vars: ['STRIPE_SECRET_KEY'],
     order: 7,
   });
 
   checks.push({
     id: 'conversions',
-    label: 'Meta ad tracking',
+    label: 'Seguimiento de anuncios (Meta)',
     status: config.meta.datasetId ? 'ready' : 'missing',
     detail: config.meta.datasetId
-      ? 'Sales are reported back to Meta so you can see which ad produced them.'
-      : 'Optional for now. Without it, Meta cannot tell you which ad produced a paying student.',
+      ? 'Las ventas se reportan a Meta para saber qué anuncio las produjo.'
+      : 'Opcional por ahora. Sin esto, Meta no te puede decir qué anuncio produjo un estudiante que paga.',
     vars: ['META_DATASET_ID'],
     order: 8,
   });

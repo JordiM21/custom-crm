@@ -448,7 +448,7 @@ async function recordConversion(lead: Lead, input: Record<string, unknown>): Pro
     log.info('conversion.unattributed', {
       lead_id: lead.id,
       event_name: eventName,
-      human: 'Conversion recorded, but this lead did not come from an ad so Meta cannot attribute it.',
+      human: 'Conversión registrada, pero este contacto no vino de un anuncio, así que Meta no puede atribuirla.',
     });
   }
 

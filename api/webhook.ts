@@ -28,7 +28,7 @@ function handleVerification(req: Req, res: Res): void {
 
   const expected = appConfig.meta.verifyToken;
   if (mode === 'subscribe' && expected && token === expected) {
-    log.info('webhook.verified', { human: 'WhatsApp successfully verified the webhook URL.' });
+    log.info('webhook.verified', { human: 'WhatsApp verificó correctamente la dirección del webhook.' });
     sendText(res, 200, challenge ?? '');
     return;
   }
@@ -36,7 +36,7 @@ function handleVerification(req: Req, res: Res): void {
   log.warn('webhook.verification_rejected', {
     mode,
     tokenConfigured: Boolean(expected),
-    human: 'A webhook verification attempt was rejected.',
+    human: 'Se rechazó un intento de verificación del webhook.',
   });
   sendText(res, 403, 'forbidden');
 }
@@ -62,7 +62,7 @@ async function handleEvent(req: Req, res: Res): Promise<void> {
   if (!signature.ok) {
     log.warn('webhook.signature_rejected', {
       reason: signature.reason,
-      human: 'Rejected a webhook call that was not signed by WhatsApp.',
+      human: 'Se rechazó una llamada al webhook que no venía firmada por WhatsApp.',
     });
     sendJson(res, 401, { error: 'invalid signature' });
     return;

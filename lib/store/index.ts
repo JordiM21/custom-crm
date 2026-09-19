@@ -31,7 +31,7 @@ export async function getStore(): Promise<Store> {
   const memory = new MemoryStore();
   instance = memory;
   log.warn('store.demo_mode', {
-    human: 'No database configured — running on demo data that resets on every deploy.',
+    human: 'No hay base de datos conectada: estás viendo datos de ejemplo que se borran en cada despliegue.',
   });
   seeding = seedDemoData(memory).catch((err) => {
     log.error('store.seed_failed', { error: String(err) });

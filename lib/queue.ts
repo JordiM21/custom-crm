@@ -35,7 +35,7 @@ export async function drainQueue(limit = 25): Promise<DrainResult> {
       log.warn('queue.paused_by_kill_switch', {
         pending,
         blockedBy: botState.blockedBy,
-        human: `The bot is switched off. ${pending} message(s) are waiting and will not be sent.`,
+        human: `El bot está apagado. Hay ${pending} mensaje(s) esperando que no se van a enviar.`,
       });
     }
     result.skipped = pending;
@@ -83,7 +83,7 @@ async function sendQueued(item: QueueItem, result: DrainResult): Promise<void> {
     result.cancelled += 1;
     log.warn('queue.cancelled_window_closed', {
       lead_id: lead.id,
-      human: `Could not reply to ${leadName(lead.display_name, lead.profile_name, lead.wa_id)}: more than 24 hours have passed since their last message.`,
+      human: `No se pudo responder a ${leadName(lead.display_name, lead.profile_name, lead.wa_id)}: pasaron más de 24 horas desde su último mensaje.`,
     });
     return;
   }
@@ -102,7 +102,7 @@ async function sendQueued(item: QueueItem, result: DrainResult): Promise<void> {
     log.error('queue.rate_limit_hit', {
       lead_id: lead.id,
       sentToday,
-      human: `The bot has sent ${sentToday} messages to ${leadName(lead.display_name, lead.profile_name, lead.wa_id)} in 24 hours. It has been paused for this parent — please check the conversation.`,
+      human: `El bot le envió ${sentToday} mensajes a ${leadName(lead.display_name, lead.profile_name, lead.wa_id)} en 24 horas. Quedó en pausa para este contacto: revisa la conversación.`,
     });
     return;
   }
