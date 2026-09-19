@@ -3,55 +3,38 @@ import type { Lead } from '../store/types.js';
 import { knowledgeIsComplete, loadKnowledge } from './knowledge.js';
 
 /**
- * System prompt assembly, in the order SPEC §5.2 specifies:
- * identity, knowledge verbatim, conversation rules, lead context, date/time,
- * tool rules.
+ * System prompt assembly.
+ *
+ * `knowledge/business.md` is the prompt. It carries the agent's identity, its
+ * tone, the forbidden phrases, the order of the conversation, the business
+ * facts, the objection handling and the escalation rules — and its own header
+ * says it is injected verbatim. This file deliberately adds nothing that
+ * overlaps with it: duplicating a rule here would mean two sources of truth
+ * that drift apart, and Jordi edits the markdown, not the code.
+ *
+ * What is left for the code is only what a static file cannot know:
+ *   - who this particular parent is and what we already learned about them
+ *   - what time it is
+ *   - which tools exist and how to call them
+ *   - a hard guard for when the file is incomplete or unreadable
+ *
+ * Order follows SPEC §5.2: identity, knowledge verbatim, rules, lead context,
+ * date and time, tool rules.
  */
 
-const IDENTITY = `Eres parte del equipo de LET Junior, una escuela de inglés en línea para niños de América Latina.
-Escribes por WhatsApp con el padre o la madre de un posible estudiante.
-Escribes en español latinoamericano neutro.`;
+/**
+ * The only behaviour hard-coded here.
+ *
+ * If `business.md` is ever missing or truncated, the agent still must not
+ * improvise at a parent. This is the floor, not the prompt.
+ */
+const SAFETY_FLOOR = `Escribes por WhatsApp, en español latinoamericano neutro, a padres y madres
+que preguntan por clases de inglés para niños en LET Junior.
 
-const CONVERSATION_RULES = `## Cómo escribes
-
-- Escribes como una persona que manda un mensaje de WhatsApp, no como una empresa.
-- Mensajes cortos. Si tu respuesta pasa de 300 caracteres, es demasiado larga.
-- UNA sola pregunta por mensaje. Nunca dos preguntas juntas.
-- Minúsculas donde sea natural. Nada de saludos formales tipo "¡Hola! 👋 Gracias por contactarnos".
-- Nada de listas con viñetas, nada de muros de emojis, nada de texto de folleto.
-- Español latinoamericano neutro. Nunca uses "vale", "vosotros" ni vocabulario de España.
-- Nunca digas que eres humano. Si te preguntan directamente si eres un bot, dilo con
-  naturalidad: eres un asistente, y Jordi lee todo personalmente.
-- No vendas antes de entender. Pregunta la edad del niño y su nivel actual de inglés
-  ANTES de mencionar planes o precios.
-- Nunca repitas una pregunta que el padre ya respondió. Tienes toda la conversación arriba.
-- Si el padre escribe en portugués o inglés, respóndele en ese idioma.
-
-## Regla más importante
-
-NUNCA digas un precio, un horario, una disponibilidad ni ninguna otra información
-del negocio que no esté escrita arriba en la sección de información, o que no venga
-del resultado de una herramienta.
-
-Si no tienes el dato, no lo inventes ni lo aproximes: usa la herramienta
-escalate_to_human.`;
-
-const ESCALATION_RULES = `## Cuándo pasar la conversación a Jordi (obligatorio)
-
-Usa escalate_to_human de inmediato si ocurre cualquiera de estas cosas:
-
-- El padre negocia el precio: pide una rebaja además del descuento por hermanos,
-  un precio especial, pagar por clase, en cuotas, o cualquier forma de pago distinta.
-  (El descuento por hermanos SÍ lo puedes responder: está en la información de arriba.)
-- El padre quiere que le confirmes un cupo en horario de la mañana.
-- Hay una queja, un reclamo o una solicitud de reembolso.
-- Se menciona una dificultad de aprendizaje, una discapacidad, un tema de salud
-  o el bienestar emocional del niño.
-- Te preguntan algo que no está en la información de arriba.
-- El padre suena molesto, preocupado o decepcionado.
-
-En estos casos no intentes resolver. Escala y dile al padre que Jordi le escribe
-personalmente en un momento.`;
+Regla que está por encima de todo lo demás: nunca inventes un dato del negocio.
+Un precio, un horario, una política o una duración que no esté escrita más abajo
+o que no venga del resultado de una herramienta, no existe. Si no lo tienes,
+usa escalate_to_human.`;
 
 const TOOL_RULES = `## Herramientas
 
@@ -59,8 +42,9 @@ const TOOL_RULES = `## Herramientas
   padre). No la dejes para el final de la conversación.
 - El campo "stage" solo avanza con update_lead. Nunca asumas que avanzó solo.
 - check_calendar_availability: úsala antes de proponer cualquier horario. Nunca
-  inventes un horario disponible.
-- book_trial_class: solo después de que el padre haya aceptado un horario concreto.
+  inventes un horario disponible, ni siquiera uno que parezca obvio.
+- book_trial_class: solo después de que el padre haya aceptado un horario concreto
+  que salió de check_calendar_availability.
 - create_payment_link: solo con un plan que exista en la configuración. Nunca
   construyas un precio tú.
 - record_conversion_event: marca "Lead" cuando el padre ya dio la edad del niño y
@@ -92,8 +76,7 @@ function leadContext(lead: Lead): string {
     );
   }
 
-  const isFirstTurn = lead.stage === 'new';
-  if (isFirstTurn) {
+  if (lead.stage === 'new') {
     lines.push('Es el primer mensaje de esta conversación.');
   }
 
@@ -101,40 +84,43 @@ function leadContext(lead: Lead): string {
 }
 
 function currentTime(): string {
-  const now = new Date();
   const formatted = new Intl.DateTimeFormat('es-CO', {
     timeZone: config.booking.timezone,
     dateStyle: 'full',
     timeStyle: 'short',
-  }).format(now);
+  }).format(new Date());
   return `Fecha y hora actual (${config.booking.timezone}): ${formatted}`;
 }
 
 export function buildSystemPrompt(lead: Lead, historySummary?: string): string {
   const knowledge = loadKnowledge();
 
-  const sections: string[] = [IDENTITY];
+  const sections: string[] = [SAFETY_FLOOR];
 
-  sections.push(`## Información del negocio\n\n${knowledge.text || '(sin información disponible)'}`);
+  sections.push(
+    knowledge.text ||
+      '## Información del negocio\n\n(El archivo de información no se pudo leer. No tienes ningún dato del negocio.)',
+  );
 
   if (!knowledgeIsComplete()) {
-    // Without this guard the model would happily read "«USD ___ al mes»" aloud
-    // to a parent as though it were a price.
+    // Without this the model reads "[USD]" or "[NOMBRE DEL PLAN]" aloud to a
+    // parent as though it were a real price or a real plan name.
     sections.push(
-      `## ADVERTENCIA IMPORTANTE
+      `## ADVERTENCIA: la información de arriba está incompleta
 
-La información del negocio de arriba está INCOMPLETA: contiene plantillas sin
-rellenar (texto entre «comillas angulares»). Ese texto NO son datos reales.
+Los textos entre corchetes ([ASÍ], [ ]) son plantillas sin rellenar, NO datos
+reales. Nunca los leas, los repitas ni los interpretes como información.
 
-Mientras esto sea así:
-- No des ningún precio, horario, política ni duración de clase.
-- Puedes saludar, preguntar la edad del niño y su nivel de inglés.
-- Para cualquier pregunta concreta sobre el servicio, usa escalate_to_human.`,
+Mientras queden plantillas sin rellenar:
+- No des ningún precio, horario, política, duración ni nombre de plan.
+- Sí puedes: saludar, preguntar la edad del niño, preguntar su nivel de inglés,
+  preguntar qué busca el padre, y hablar con el tono y las reglas de arriba.
+- Para cualquier pregunta concreta sobre el servicio, usa escalate_to_human con
+  una frase corta y honesta, como dice la sección de escalamiento.
+
+Esto no es un error tuyo. Es el estado actual del archivo.`,
     );
   }
-
-  sections.push(CONVERSATION_RULES);
-  sections.push(ESCALATION_RULES);
 
   if (historySummary) {
     sections.push(`## Resumen de la conversación anterior\n\n${historySummary}`);
@@ -143,48 +129,36 @@ Mientras esto sea así:
   sections.push(`## Contexto de este contacto\n\n${leadContext(lead)}\n${currentTime()}`);
   sections.push(TOOL_RULES);
 
-  return sections.join('\n\n');
+  return sections.join('\n\n---\n\n');
 }
 
 /**
  * SPEC §6 — a keyword pre-check in code, not only in the prompt.
  *
- * The prompt tells the model to escalate on these topics. This catches the case
- * where it does not, because these are exactly the conversations where being
- * wrong costs a customer or hurts a child.
+ * The knowledge file tells the model to escalate on these topics. This catches
+ * the case where it does not, because these are exactly the conversations where
+ * being wrong costs a customer or hurts a child.
+ *
+ * Kept in step with section 6 of `knowledge/business.md`. If that section
+ * changes, change this too — they are meant to say the same thing, one for the
+ * model and one as a backstop that does not depend on the model complying.
  */
 const ESCALATION_KEYWORDS: { pattern: RegExp; reason: string }[] = [
+  // "Piden descuento o quieren negociar el precio." The sibling-discount line
+  // in the knowledge file is still an unfilled bracket, so there is no
+  // documented answer to give and every discount question is Jordi's.
+  { pattern: /\b(descuento|rebaja|promoci[oó]n|oferta especial|m[aá]s barato|me lo dejas?|precio especial|cuotas?|por clase|pagar menos|mejor precio|hacer un precio|financia)\b/i, reason: 'price_negotiation' },
   { pattern: /\b(reembolso|devoluci[oó]n|devu[eé]lv|me devuelven|cancelar el pago|contracargo)\b/i, reason: 'refund_request' },
   { pattern: /\b(queja|reclamo|estafa|fraude|denuncia|demanda|abogado)\b/i, reason: 'complaint' },
   { pattern: /\b(autis|asperger|tdah|d[ée]ficit de atenci[oó]n|dislexia|discapacidad|necesidades especiales|terapia|psic[oó]log)\b/i, reason: 'child_wellbeing' },
   { pattern: /\b(bullying|acoso|deprimid|ansiedad|problema emocional)\b/i, reason: 'child_wellbeing' },
+  // "Piden hablar con Jordi o con una persona."
+  // Deliberately narrow: "lo quiero hablar con mi esposo" is the objection in
+  // section 5 of the knowledge file, not a request for a person.
+  { pattern: /\b(hablar con (jordi|una persona|alguien|un humano|el profesor|el profe|un asesor)|p[aá]same con (jordi|una persona|alguien)|atienda una persona|no quiero hablar con un bot)\b/i, reason: 'asked_for_human' },
 ];
 
-/**
- * Price talk is handled separately, because one discount question has a
- * documented answer and the rest do not.
- *
- * The knowledge file states the sibling offer outright: a second student pays
- * half price, on either plan. Escalating that question would send one of the
- * ten most common questions in the business to Jordi every single time, which
- * defeats the point of having written the answer down.
- *
- * Everything past that documented offer — a further discount, a special price,
- * per-class or instalment payments — is a negotiation, and negotiations are
- * Jordi's.
- */
-const NEGOTIATION = /\b(rebaja|m[aá]s barato|me lo dejas?|precio especial|cuotas?|por clase|pagar menos|mejor precio|hacer un precio|financia)\b/i;
-const DISCOUNT_WORD = /\b(descuento|promoci[oó]n|oferta)\b/i;
-const SIBLING_CONTEXT = /\b(hermanit[oa]s?|herman[oa]s?|dos (hij[oa]s|ni[nñ][oa]s|peques)|mis hij[oa]s|segund[oa] (hij[oa]|estudiante|ni[nñ][oa]))\b/i;
-
 export function detectMandatoryEscalation(text: string): string | null {
-  if (NEGOTIATION.test(text)) return 'price_negotiation';
-
-  if (DISCOUNT_WORD.test(text)) {
-    // The sibling offer is in the knowledge file, so let the model answer it.
-    if (!SIBLING_CONTEXT.test(text)) return 'price_negotiation';
-  }
-
   for (const { pattern, reason } of ESCALATION_KEYWORDS) {
     if (pattern.test(text)) return reason;
   }

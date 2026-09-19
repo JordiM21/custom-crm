@@ -25,7 +25,7 @@ Construido según `SPEC.md`, milestones M1 a M5.
 | Mandar conversiones a Meta (M6) | **Sin construir.** Los eventos se guardan y esperan en la base de datos. |
 | Mensajes de plantilla, notas de voz, imágenes | **Sin construir.** Fuera del alcance de la v1. |
 
-128 pruebas automáticas pasan. Lo que **no** está probado es todo lo que toca
+130 pruebas automáticas pasan. Lo que **no** está probado es todo lo que toca
 una cuenta real, porque todavía no hay cuentas conectadas.
 
 **Ahora mismo el sistema corre en modo demostración:** base de datos falsa,
@@ -100,8 +100,8 @@ Vale la pena probar esto, porque cada mensaje ejercita una regla distinta:
 | `hola` | Un saludo corto y **una** sola pregunta. Nunca un precio. |
 | `cuanto cuesta?` | Debería preguntar la edad del niño antes de dar precios. |
 | `tiene 9 años, se llama Sofía` | Debería guardar nombre y edad — míralo en la línea debajo del chat. |
-| `tienen descuento por dos hermanos?` | **Debería responder que sí**, el segundo paga mitad. Está en la información. |
-| `me puedes hacer un precio mejor?` | Directo a ti. La etapa pasa a "Atendido por Jordi". |
+| `tienen descuento por dos hermanos?` | Directo a ti. La etapa pasa a "Atendido por Jordi". |
+| `puedo hablar con Jordi?` | Igual — pedir una persona siempre te la pasa a ti. |
 | `quiero que me devuelvan el dinero` | Igual — los reembolsos nunca llegan al modelo. |
 | `mi hijo tiene dislexia, sirve?` | Igual — cualquier tema del niño es tuyo. |
 | `esto es un bot?` | Debería decir que es un asistente y que tú lees todo. |
@@ -113,17 +113,24 @@ Vale la pena probar esto, porque cada mensaje ejercita una regla distinta:
 Este es el ciclo que de verdad mejora el bot, y es todo lo que la gente quiere
 decir cuando habla de "entrenarlo":
 
+`knowledge/business.md` **es** el prompt. Tu identidad, tu tono, las frases
+prohibidas, el orden de la conversación, los datos del negocio, las objeciones y
+las reglas de escalamiento: todo eso se inyecta tal cual, palabra por palabra.
+El código solo le agrega lo que un archivo no puede saber (quién es este
+contacto, qué hora es, qué herramientas existen).
+
+O sea que el ciclo es:
+
 1. Lee una respuesta en **Probar** que no te guste.
-2. Decide qué tipo de problema es:
-   - **Dato equivocado** (precio, horario, política) → arregla
-     `knowledge/business.md`.
-   - **Tono o comportamiento equivocado** (muy formal, dos preguntas juntas,
-     vende demasiado pronto) → dímelo y cambio las reglas del prompt.
+2. Abre `knowledge/business.md` y arregla la sección que corresponda. Casi
+   siempre está ahí: si suena robótico, es la sección 2; si pregunta en mal
+   orden, la 3; si dice un dato equivocado, la 4; si maneja mal una objeción,
+   la 5.
 3. Reinicia (`Ctrl+C` y otra vez `npm run dev:local`) y prueba el mismo
    mensaje.
 
-Casi todo lo que vas a querer cambiar está en el archivo de información, no en
-el prompt.
+No necesitas tocar código para cambiar cómo habla el bot. Si algo no se puede
+arreglar desde el archivo, dímelo y lo veo.
 
 ## Qué NO prueba esto
 
@@ -490,12 +497,15 @@ En orden de lo que más desbloquea:
    cantidad de planificación.
 1. **La respuesta del Paso 0.** ¿Tu número se puede pasar a coexistencia, o
    está bloqueado con otro proveedor? Nada más importa hasta saber eso.
-2. **Tres datos que faltan** en `knowledge/business.md` (búscalos con Ctrl+F,
-   están entre «comillas angulares»):
-   - Con cuántas horas de anticipación hay que avisar para reponer una clase
-     del Plan Completo.
-   - Qué día se hacen las reposiciones.
-   - Cuántos días de garantía tiene el Plan Completo.
+2. **Rellenar `knowledge/business.md`.** Es tu archivo de identidad, tono y
+   conocimiento: se inyecta tal cual en el prompt. Quedan 25 corchetes por
+   llenar (toda la sección 4 y casi toda la 5). Mientras queden, el bot saluda,
+   pregunta la edad y el nivel, y te pasa cualquier pregunta concreta.
+
+   Tienes material ya listo para copiar en
+   [`knowledge/referencia-drive.md`](knowledge/referencia-drive.md), sacado de
+   tus documentos de Drive. **Léelo antes: hay tres contradicciones que solo tú
+   puedes resolver**, entre ellas si las clases son individuales o en grupo.
 3. **La dirección de Vercel,** cuando hagas el Paso 1.
 4. **Cualquier cosa que falle.** Una captura de la página Conexiones del panel
    me dice casi todo.
@@ -572,7 +582,7 @@ a ti.
 
 ```bash
 npm install
-npm test          # 128 pruebas, sin red y sin cuentas
+npm test          # 130 pruebas, sin red y sin cuentas
 npm run typecheck
 npm run dev:local # panel + API en localhost:3000, sin Vercel
 ```

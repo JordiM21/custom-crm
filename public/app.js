@@ -668,8 +668,9 @@ function renderKnowledge(knowledge) {
 
   $('knowledge').innerHTML = `
     <div class="check-detail">
-      Faltan ${knowledge.missing.length} datos por llenar en <code>knowledge/business.md</code>.
-      Mientras tanto el bot no da precios ni horarios: pasa esas conversaciones a ti.
+      Faltan ${knowledge.missing.length} datos por llenar en <code>knowledge/business.md</code>
+      (los textos entre corchetes). Mientras tanto el bot no da precios, horarios ni
+      nombres de planes: pasa esas conversaciones a ti.
     </div>
     <div class="check-vars" style="margin-top:10px">
       ${knowledge.missing.map((m) => `<span class="var">${escapeHtml(m)}</span>`).join('')}

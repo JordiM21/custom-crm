@@ -12,15 +12,28 @@ import { log } from '../logger.js';
 let cache: { text: string; unfilled: string[] } | null = null;
 
 /**
- * Placeholders look like «esto». While any survive, the business facts are not
- * real, so the agent is not allowed to answer factual questions from them.
+ * Placeholders look like [ESTO] or [ ]. While any survive, the business facts
+ * are not real, so the agent is not allowed to answer factual questions from
+ * them — a model that sees "[USD]" in a price table will read it out.
+ *
+ * Returns distinct blanks: `[ ]` appears several times and counts once.
  */
 function findPlaceholders(text: string): string[] {
-  // The file's own instructions to Jordi are HTML comments and mention the
-  // placeholder syntax; scanning them would report a permanently unfilled file.
-  const withoutComments = text.replace(/<!--[\s\S]*?-->/g, '');
-  const matches = withoutComments.match(/«[^»]{0,80}»/g) ?? [];
-  return [...new Set(matches.map((m) => m.replace(/\s+/g, ' ')))];
+  const cleaned = text
+    // Instructions addressed to the developer or to Jordi, not to the model.
+    .replace(/<!--[\s\S]*?-->/g, '')
+    // Inline code, where the file explains the placeholder syntax itself
+    // (`[CORCHETES]`); scanning it would report a permanently unfilled file.
+    .replace(/`[^`\n]*`/g, '')
+    .replace(/```[\s\S]*?```/g, '')
+    // Markdown links: [texto](url) is content, not a blank to fill.
+    .replace(/\[[^\]]*\]\([^)]*\)/g, '')
+    // Checkbox lists, which are a normal markdown thing.
+    .replace(/^\s*[-*]\s*\[[ xX]\]/gm, '');
+
+  const matches = cleaned.match(/\[[^\]\n]{0,250}\]/g) ?? [];
+
+  return [...new Set(matches.map((m) => m.replace(/\s+/g, ' ').trim()))];
 }
 
 function candidatePaths(): string[] {

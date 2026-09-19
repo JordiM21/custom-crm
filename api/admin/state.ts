@@ -97,7 +97,11 @@ export default async function handler(req: Req, res: Res): Promise<void> {
     demo: isDemoMode(),
     environment: config.environment,
     ai: { provider: getProvider().name, real: isRealProvider() },
-    knowledge: { complete: knowledgeIsComplete(), missing: knowledge.unfilled.slice(0, 12) },
+    knowledge: {
+      complete: knowledgeIsComplete(),
+      total: knowledge.unfilled.length,
+      missing: knowledge.unfilled.slice(0, 12),
+    },
     plans: plans.map((p) => ({ id: p.id, label: p.label, ready: Boolean(p.stripePriceId) })),
     notifyChannels: configuredChannels(),
     checklist,

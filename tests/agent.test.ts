@@ -55,6 +55,8 @@ beforeEach(async () => {
   __setProvider(provider);
   // A complete knowledge file, so the "incomplete" warning is not under test.
   __setKnowledge({ text: 'Plan Completo: USD 50 al mes, 2 clases por semana.', unfilled: [] });
+  // The real file lives in knowledge/business.md; tests stub it so a change to
+  // Jordi's wording never breaks the test suite.
   await setBotEnabled(true);
 });
 
@@ -116,7 +118,7 @@ test('a price negotiation escalates without asking the model', async () => {
   assert.equal(updated.stage, 'human_handling');
 });
 
-test('the sibling discount is answered, because the knowledge file documents it', async () => {
+test('a sibling-discount question escalates while the file has no answer for it', async () => {
   const lead = await makeLead();
 
   const result = await runAgent(lead.id, {
@@ -124,11 +126,37 @@ test('the sibling discount is answered, because the knowledge file documents it'
     waMessageId: 'wamid.5b',
   });
 
-  // Escalating this would send one of the ten most common questions in the
-  // business to Jordi every time, which is the opposite of the point.
+  // Section 6 of knowledge/business.md says every discount request goes to
+  // Jordi, and the sibling line in section 4 is still an unfilled bracket, so
+  // there is no documented answer to give.
+  assert.equal(result.status, 'escalated');
+  assert.equal(provider.lastRequest, null, 'the model was never asked');
+});
+
+test('consulting a partner is an objection, not a request for a human', async () => {
+  const lead = await makeLead();
+
+  // Section 5 of the knowledge file handles this one directly: do not push,
+  // offer a trial class, leave the door open. Escalating it would waste the
+  // handoff and Jordi's attention.
+  const result = await runAgent(lead.id, {
+    text: 'me gusta, pero lo quiero hablar con mi esposo primero',
+    waMessageId: 'wamid.5f',
+  });
+
   assert.equal(result.status, 'queued');
-  assert.ok(provider.lastRequest, 'the model was asked');
-  assert.equal((await store.getLeadById(lead.id))!.bot_paused, false);
+});
+
+test('asking to speak to a person escalates', async () => {
+  const lead = await makeLead();
+
+  const result = await runAgent(lead.id, {
+    text: 'puedo hablar con Jordi directamente?',
+    waMessageId: 'wamid.5e',
+  });
+
+  assert.equal(result.status, 'escalated');
+  assert.equal((await store.getLeadById(lead.id))!.bot_paused_reason, 'escalated:asked_for_human');
 });
 
 test('asking for more on top of the sibling discount still escalates', async () => {
@@ -237,12 +265,27 @@ test('the ad headline reaches the system prompt', async () => {
 });
 
 test('an incomplete knowledge file adds the do-not-quote-facts warning', async () => {
-  __setKnowledge({ text: 'Precio: «USD ___ al mes»', unfilled: ['«USD ___ al mes»'] });
+  __setKnowledge({ text: '| Plan | [USD] |', unfilled: ['[USD]'] });
   const lead = await makeLead();
 
   await runAgent(lead.id, { text: 'hola', waMessageId: 'wamid.14' });
 
-  assert.match(provider.lastRequest!.system, /INCOMPLETA/);
+  const system = provider.lastRequest!.system;
+  assert.match(system, /ADVERTENCIA/);
+  assert.match(system, /corchetes/, 'names the placeholder syntax it must not read out');
+});
+
+test('a readable knowledge file is injected verbatim, not summarised', async () => {
+  const text = '## 2. Cómo hablas\n\nNunca escribas "Gracias por contactarnos".';
+  __setKnowledge({ text, unfilled: [] });
+  const lead = await makeLead();
+
+  await runAgent(lead.id, { text: 'hola', waMessageId: 'wamid.15' });
+
+  assert.ok(
+    provider.lastRequest!.system.includes(text),
+    'the file appears word for word in the system prompt',
+  );
 });
 
 test('the agent resolves a tool call and then answers the parent', async () => {
